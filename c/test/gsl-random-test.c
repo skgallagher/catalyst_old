@@ -32,7 +32,6 @@ int main(){
 
   printf ("generator type: %s\n", gsl_rng_name (r));
   printf ("seed = %lu\n", my_seed);
-  printf ("first value = %lu\n", gsl_rng_get (r));
 
   int N = 10^7;
   double p[4] = {1, 1, 1, 1};
@@ -53,10 +52,8 @@ int main(){
   printf("[%d, %d, %d, %d]\n", m_array[N-1][0], m_array[N-1][1],
 	 m_array[N-1][2], m_array[N-1][3]);
 
+  gsl_rng_free (r); //not sure what this line does
   
-  gsl_rng_free (r);
-  
- 
 }
 
 
