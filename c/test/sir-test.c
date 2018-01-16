@@ -60,7 +60,7 @@ struct sir {
 int
 main (void)
 {
-  int dimension = 2;		/* number of differential equations */
+  int dimension = 3;		/* number of differential equations */
   
   double eps_abs = 1.e-8;	/* absolute error requested */
   double eps_rel = 1.e-10;	/* relative error requested */
