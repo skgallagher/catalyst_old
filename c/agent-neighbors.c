@@ -164,19 +164,10 @@ void make_nbr_dict(int N, int E, int env[][E], GHashTable *dict){
 	}
       }
     }
-    if (neighbors->len > 0){
-      printf("neighbors of agent %d\n", ii);
-      prt(neighbors);
-    }
-   
-    g_array_free(neighbors, FALSE);
-    
   }
-
-  
-
-
 }
+
+
 void prt(GArray* a) {
  int ii;
  for (ii = 0; ii < a->len; ii++){
@@ -189,4 +180,7 @@ void prt(GArray* a) {
 void print(gpointer key, gpointer value, gpointer data) {
   printf("Here are some neighbors of: %d", *(gint*)key);
   printf("\n");
+ 
+  printf("The last item is '%d'\n",
+	 *(gint*)g_slist_last(value)->data); 
 }
