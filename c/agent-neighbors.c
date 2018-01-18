@@ -145,7 +145,6 @@ void make_nbr_dict(int N, int E, int env[][E], GHashTable *dict){
    
   for(int ii = 0; ii < N; ii++){
 
-    GArray* neighbors = g_array_sized_new(FALSE, FALSE, sizeof(int), N);
     for(int jj=0; jj < N; jj++){
 
       for(int ee=0; ee < E; ee++){
@@ -154,14 +153,13 @@ void make_nbr_dict(int N, int E, int env[][E], GHashTable *dict){
 	// NEIGHBORS should not include self
 	if( current_env > 0 & ii !=jj & 
 	    env[jj][ee] == current_env){
-	  g_array_append_val(neighbors, jj);
-	  /* gint* my_ind = g_new(gint, 1); */
-	  /* *my_ind = ii; */
-	  /* gint* my_nbr = g_new(gint, 1); */
-	  /* *my_nbr = jj; */
-	  /* g_hash_table_insert(dict, my_ind, */
-	  /* 		      g_slist_append(g_hash_table_lookup(dict, my_ind), */
-	  /* 				     my_nbr)); */
+	  gint* my_ind = g_new(gint, 1);
+	  *my_ind = ii;
+	  gint* my_nbr = g_new(gint, 1);
+	  *my_nbr = jj;
+	  g_hash_table_insert(dict, my_ind,
+	  		      g_slist_append(g_hash_table_lookup(dict, my_ind),
+	  				     my_nbr));
 	  break;
 	}
       }
@@ -170,15 +168,7 @@ void make_nbr_dict(int N, int E, int env[][E], GHashTable *dict){
       printf("neighbors of agent %d\n", ii);
       prt(neighbors);
     }
-
-    
-
-    gint* k_one = g_new(gint, 1);
-    *k_one = ii;
-    g_hash_table_insert(dict, k_one, neighbors);
-
-    
-
+   
     g_array_free(neighbors, FALSE);
     
   }
