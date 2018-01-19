@@ -1,0 +1,143 @@
+% Created 2018-01-19 Fri 15:26
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{fixltx2e}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage{float}
+\usepackage{wrapfig}
+\usepackage{rotating}
+\usepackage[normalem]{ulem}
+\usepackage{amsmath}
+\usepackage{textcomp}
+\usepackage{marvosym}
+\usepackage{wasysym}
+\usepackage{amssymb}
+\usepackage{hyperref}
+\tolerance=1000
+\author{Shannon Gallagher}
+\date{\today}
+\title{Catalyst: Agents of Change}
+\hypersetup{
+  pdfkeywords={},
+  pdfsubject={},
+  pdfcreator={Emacs 25.3.1 (Org mode 8.2.10)}}
+\begin{document}
+
+\maketitle
+
+
+\section{Outline of software}
+\label{sec-1}
+\begin{verbatim}
+INPUT: Control file with agents file; disease parameters;
+ disease model; time steps; paralllel options;
+ activity schedule; individual agents/instantiations to track
+for every timestep t
+  for every activity at time t
+    prob_infection = infect_agents(agents, activity, 
+                     time, disease)
+  end
+  agent_status = update_agents(prob_infection)
+  update_activities()
+  update_disease()
+end
+OUTPUT: status of agent at each time step, saved as multiple text files;
+ number of agents in compartment at each time step;
+ specific agents over time; activity info
+\end{verbatim}
+
+\subsection{Infect Agents}
+\label{sec-1-1}
+\begin{verbatim}
+INPUT: agents, activity, time, disease
+for every infected agent ii
+  for every neighbor of agent ii, jj
+    update_infection_prob(ii,jj, activity, disease, time)
+  end
+end
+OUTPUT: updated agent probabilities
+\end{verbatim}
+
+\section{Description}
+\label{sec-2}
+\subsection{General Outline}
+\label{sec-2-1}
+
+
+The benefit of this program is that the agent-based part (the infect\_agents portion) is completely modular.  The function update\_agents() is a multinomial draw.  Thus this portion can be used both for heterogeneous individual agents along with homogeneous agents (the compartment-model).
+
+\subsection{Infect Agents -- the "AM" portion}
+\label{sec-2-2}
+This function is what differentiates the model from a CM. In this step, agents explicitly interact with one another and hence can change one another.  This interaction has the potential to be very slow.  Naively, if we were to loop over all pairs of agents and all environments then we would be looking at $O(N^2E)$ runtime where $N$ is the number of agents and $E$ is the number of environments.
+
+Hence, it is critical to be speed up this step.  It is worth noting that in SI-framework, the only interactions that are worthwhile is when an agent is actively infecting another.  All other compartment transitions are independent from one another, meaning they do not depend on the status of other agents.  Hence we only need to loop over agents in "infectious" states.  Moreover, we only need to look at the neighbors' of these infectious agents, specifically those in susceptible states.
+
+We also assume that once an agent is infected by another, she will be unaffected by further infections.  As such, once an agent is infected by another, we remove her from the susceptible pool.
+
+We plan to reduce this step to $O(I)$ where $I$ is the number of infectious individuals where, typically $I << N$.  The first step is that we only need to loop over infectious agents, for a run time of $O(I)$.  We then need to loop over all neighbors of infectious agents.  However, we note that we can pre-compute potential neighbors and store them in a dictionary, so look up will be $O(1)$.  Neighbors will be over all environments so we no longer have to loop over those.  Thus we only have to check of neighbors of the infectious are susceptible and update the infection probabilities based on the environment activities, two agents, and disease parameters.
+
+
+
+\section{Curent implementation}
+\label{sec-3}
+\begin{itemize}
+\item A working framework in C
+\item Incorporation of GNU Standard Library packages for ODE integration and random number generation
+\item A working SIR model
+\item Testing framework to initialize agents and environments
+\item A Dictionary of neighbors through GLib's GHashTable
+\end{itemize}
+
+\section{Next Steps}
+\label{sec-4}
+\begin{itemize}
+\item infection to change probabilities of agents.
+\begin{itemize}
+\item How to store these? CM probs vs. agent probs
+\end{itemize}
+\item integrate different modules to simulate the SIR
+\end{itemize}
+
+
+\section{Long Term}
+\label{sec-5}
+\begin{itemize}
+\item Input file standards
+\item Make the ODE solver more generic to support general systems.  The main problem is how to incorporate this symbolically to be an easy input for the control file
+\item Estimate ODE parameters from an AM through least squares or mle.
+\item Convert SPEW agents to a viable format for catalyst
+\item Make nice interface for control file (shiny)
+\item Visualize outputs
+\end{itemize}
+
+\section{Schedule}
+\label{sec-6}
+\subsection{{\bfseries\sffamily DONE} \textit{<2018-01-01 Mon>} - \textit{<2018-01-13 Sat>}}
+\label{sec-6-1}
+\begin{itemize}
+\item Set up preliminaries.
+\item Learned how to use C libraries, especially GSL (GNU Scientific Library).
+\item Got a much clearer demonstration of how pointers work
+\item "Finalize" framework for software
+\end{itemize}
+
+\subsection{{\bfseries\sffamily DONE} \textit{<2018-01-15 Mon>} - \textit{<2018-01-21 Sun>}}
+\label{sec-6-2}
+\subsubsection{The "AM" part}
+\label{sec-6-2-1}
+\begin{itemize}
+\item set up testing framework for cm-am
+\item Work and get used to GLib and included data structures including Arrays which can grow, singly-linked lists, and hashtables to use within C.
+\item Made a function to make a dictionary of neighbors.
+\end{itemize}
+\subsection{{\bfseries\sffamily TODO} \textit{<2018-01-22 Mon>} - \textit{<2018-01-26 Fri>}}
+\label{sec-6-3}
+\begin{itemize}
+\item Store both a single probability and multiple probabilities for agents, \ldots{} likely not stored at each step
+\item Start work on fitting a SIR model to the AM
+\item Visualize outputs in R
+\end{itemize}
+% Emacs 25.3.1 (Org mode 8.2.10)
+\end{document}
