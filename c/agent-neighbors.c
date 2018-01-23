@@ -22,8 +22,18 @@ void initialize_envs(int E, int N, int max_env,
 		     int env[][E],
 		     int init_env_counts[][100]);
 void make_nbr_dict(int N, int E, int env[][E], GHashTable *dict);
+int find_infected_agents(int N, int t, int infection_state_cats[],
+			  int n_inf_states,
+			 int agent_status[][N], int init_inf_inds[]);
+void initialize_base_probs(int T, int N, int K,
+			   int agent_status[][N],
+			   char base_probs_fn[],
+			   double base_probs[][K][K]);
+
+// Printing helpers
 void prt(GArray* a);
 void print(gpointer key, gpointer value, gpointer data);
+void print_array(int a[], int N);
 
 ///////////////////////////////////////////////////
 int main(){
@@ -31,7 +41,14 @@ int main(){
   int T = 10; // number of time steps
   int K = 5; // number of states
   int agent_status[T][N];
-  int init_state_counts[] = {4, 3, 2, 0, 1};
+  int init_state_counts[] = {9, 1, 0}; // S=9, I = 1, R =0
+  int infection_state_cats[] = {1}; // 1 is the only infection state
+  int susceptible_state_cats[] = {0}; //0 is the only susceptible state
+  int init_inf_inds[N];
+  int n_inf_inds = 0;
+  int n_inf_states = 1;
+
+  
 
   initialize_agents(T, N, K,
 		    agent_status,
@@ -75,6 +92,25 @@ int main(){
   printf("There are %d keys in the hash\n", g_hash_table_size(dict));
 
   g_hash_table_foreach(dict, print, NULL);
+
+  // Initialize base probabilities
+  double base_probs[T][K][K];
+  char base_probs_fn[] = "null";
+  initialize_base_probs(T, N, K,
+			   agent_status,
+			   base_probs_fn,
+			   base_probs);
+
+
+  // Find the initial infected agents
+
+  n_inf_inds = find_infected_agents(N, 0, infection_state_cats,
+		       n_inf_states, agent_status,
+		       init_inf_inds);
+  print_array(init_inf_inds, n_inf_inds);
+
+
+  //  
 
 
 }
@@ -184,3 +220,61 @@ void print(gpointer key, gpointer value, gpointer data) {
   printf("The last item is '%d'\n",
 	 *(gint*)g_slist_last(value)->data); 
 }
+
+
+/*
+Loop over the agents at time t and find which of them are in infectious states
+Inputs:
+N - number of total agents
+t - the current time step.
+infection_state_cats array of indices corresponding to the infectious states.  Ex. for the SIR model. The only infectious state is "I" which is category 1.
+agent_status T x N array of agent states where entry tn corresponds to agent n's state at time t.
+inf_inds -- pointer to array of indices of infectious agents at current time step 
+
+Output: modified inf_inds and n_inf_inds -- updated to show the current infectious agens
+ */
+int find_infected_agents(int N, int t, int infection_state_cats[],
+			  int n_inf_states,
+			  int agent_status[][N], int inf_inds[]){
+
+  int n_inf_inds = 0;
+  
+  for(int ii=0; ii < N; ii++){
+    for(int jj = 0; jj < n_inf_states; jj++){
+      if( agent_status[t][ii] == infection_state_cats[jj]){
+	inf_inds[n_inf_inds] = ii;
+	n_inf_inds++;
+      }
+    }
+  }
+  return n_inf_inds;
+  
+
+}
+
+
+void print_array(int a[], int N){
+  for(int ii=0; ii < N; ii++){
+    printf("%d ", a[ii]);
+  }
+  printf("\n");
+
+}
+
+/*
+
+ */
+void initialize_base_probs(int T, int N, int K,
+			   int agent_status[][N],
+			   char base_probs_fn[],
+			   double base_probs[][K][K]){
+
+
+
+}
+
+
+/* Comipliation command
+gcc `pkg-config --cflags --libs glib-2.0` -o agent-neighbors agent-neighbors.c
+Source: https://www.ibm.com/developerworks/linux/tutorials/l-glib/
+*/
