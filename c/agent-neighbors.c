@@ -29,17 +29,44 @@ void initialize_base_probs(int T, int N, int K,
 			   int agent_status[][N],
 			   char base_probs_fn[],
 			   double base_probs[][K][K]);
+void get_init_agent_probs(int T, int N, int K,
+			   int agent_status[][N],
+			   double base_probs[][K][K],
+			   double agent_probs[][K]);
+void infect_agent(int n, int m,
+		  int t, 
+		  int N, int K,
+		  int agent_status[][N],
+		  int E, int env[][E],
+		  int env_inds[],
+		  int inf_cats[],
+		  int sus_cats[],
+		  double infection_probs[][K][K],
+		  double agent_probs[][K]);
+void get_inf_probs(int n, int m,
+		   int t, 
+		   int N, int K,
+		   int agent_status[][N],
+		   int E, int env[][E],
+		   int env_inds[],
+		   int inf_cats[],
+		   int sus_cats[],
+		   double infection_probs[][K][K],
+		   double updated_probs[]);
+int draw_multinom(float probs[], int K);
+float float_rand( float min, float max );
 
 // Printing helpers
 void prt(GArray* a);
 void print(gpointer key, gpointer value, gpointer data);
 void print_array(int a[], int N);
+void print_2d_array(int I, int J, double a[][J]);
 
 ///////////////////////////////////////////////////
 int main(){
   int N = 10; // number of agents
   int T = 10; // number of time steps
-  int K = 5; // number of states
+  int K = 3; // number of states
   int agent_status[T][N];
   int init_state_counts[] = {9, 1, 0}; // S=9, I = 1, R =0
   int infection_state_cats[] = {1}; // 1 is the only infection state
@@ -100,6 +127,15 @@ int main(){
 			   agent_status,
 			   base_probs_fn,
 			   base_probs);
+
+  double agent_probs[N][K]; // prob of transitioning from current state to state k
+  get_init_agent_probs(T, N, K,
+		       agent_status,
+		       base_probs,
+		       agent_probs);
+
+  printf("initial agent probs of transition conditioned on current state\n");
+  print_2d_array(N, K, agent_probs);
 
 
   // Find the initial infected agents
@@ -261,17 +297,158 @@ void print_array(int a[], int N){
 
 }
 
-/*
+void print_2d_array(int I, int J, double a[][J]){
+  for(int ii=0; ii < I; ii++){
+    for(int jj=0; jj < J; jj++){
+      printf("%.2f ", a[ii][jj]);
+    }
+    printf("\n");
+  }
 
+}
+
+
+
+/*
+Create the initial probabilities for compartment transitions
+INPUTS:
+T - total number of time steps
+N - total number of agents
+K - total number of compartments
+agent_status - TxN array of agent status where entry A_{tn} \in {1, \dots, K} is the agent n's status at time t
+base_probs_fn - character string of the saved base probabilities.  Default is "null" meaning we initialize our own probs
+base_probs - TxKxK array where entry A_{tij} is the probability of transitioning from compartment i to j at time t to t+1.  This is also a pointer that will be updated and returned
+OUTPUTS: updated base_probs which is a TxKxK array where sum_j=1^K A_{tij} = 1 for all t,i.
  */
 void initialize_base_probs(int T, int N, int K,
 			   int agent_status[][N],
 			   char base_probs_fn[],
 			   double base_probs[][K][K]){
+ 
+    // Hard coded for a SIR model with 50% of transitioning from S to I and I to R
+    for(int tt=0; tt < T; tt++){ // Some S move to I and I move to R, All R to R
+      base_probs[tt][0][0] = 0.5;
+      base_probs[tt][0][1] = 0.5;
+      base_probs[tt][0][2] = 0.0;
+      base_probs[tt][1][0] = 0.0;
+      base_probs[tt][1][1] = 0.5;
+      base_probs[tt][1][2] = 0.5;
+      base_probs[tt][2][0] = 0.0;
+      base_probs[tt][2][1] = 0.0;
+      base_probs[tt][2][2] = 1.0;
+    }
+ 
+}
 
 
+/*
+Initialize current probabilities of transition conditioned on agent's initial state
+INPUTS:
+T - total number of time steps
+N - total number of agents
+K - total number of compartments
+agent_status - TxN array of agent status where entry A_{tn} \in {1, \dots, K} is the agent n's status at time t
+base_probs - TxKxK array where entry A_{tij} is the probability of transitioning from compartment i to j at time t to t+1. 
+agent_probs - NxK array where entry A_{nk} is agent n's probability of transitioning to state k conditioned on their current state.  This is also the pointer for the object that will be modified
+OUTPUT: updated agent_probs initialized at time t=0
+ */
+void get_init_agent_probs(int T, int N, int K,
+			  int agent_status[][N],
+			  double base_probs[][K][K],
+			  double agent_probs[N][K]){
+  int current_status;
+  for(int ii = 0; ii < N; ii++){
+    for(int kk=0; kk < K; kk++){
+      current_status = agent_status[0][ii];
+      agent_probs[ii][kk] = base_probs[0][current_status][kk];
+    }
+  }
+}
+
+
+/*
+Chance to infect susceptible agent by infectious agent.  Updates agent_probs accordingly
+INPUTS:
+n - index of infectious agent
+m - index of susceptible agent
+t - current time step, t=0, ..., T
+N - total number of agents
+K - total number of compartments
+agent_status TxN array where A_{tn} is agent n's current status at time t
+E - total number of environments
+env -  N x E array where entry
+  n,e is the nth agent's e^th environment assignment.  All 0s constitute a NULL assignment.
+env_inds - array of indices of environments agents share
+inf_cats- indices of states which correspond to infectious states
+sus_cats - indices of states which correspond to susceptible states
+infection_probs - KxKxK where entry ijk is probability of agent with status i infecting agent with status j to status k.  Should be a sparse matrix. As only entries ijk > 0 if i is an infectious state, j is a susceptible state,
+*/
+void infect_agent(int n, int m,
+		  int t, 
+		  int N, int K,
+		  int agent_status[][N],
+		  int E, int env[][E],
+		  int env_inds[],
+		  int inf_cats[],
+		  int sus_cats[],
+		  double infection_probs[][K][K],
+		  double agent_probs[][K]){
+
+  // Extract the probability of agent n infecting agent m, conditioned on environments, etc
+  double updated_probs[K];
+  get_inf_probs(int n, int m,
+		int t, 
+		int N, int K,
+		int agent_status[][N],
+		int E, int env[][E],
+		int env_inds[],
+		int inf_cats[],
+		int sus_cats[],
+		double infection_probs[][K][K],
+		double updated_probs[]);
+  // Actually perform a multinomial draw to see whether agent was infected
+  int new_sus_state;
+  new_sus_state = multinomial_draw(updated_probs, K);
+  // Update agent's new probabilities of transitioning. We ensure an infection by setting that state's probability to 1
+  for(kk=0; kk < K; kk++){
+    if( kk == new_sus_state){
+      agent_probs[m][kk] = 1.0;
+    } else {
+      agent_probs[m][kk] = 0.0;
+    }
+  }
+}
+
+/* Return an integer corresponding to the drawn multinomial
+   category */
+int draw_multinom(float probs[], int K){
+  int multinom_draw;
+  float cum_prob = 0.0;
+  float draw = float_rand(0.0, 1.0);
+  /* If the draw is in the 1st interval of cumulative probability, then 1 is the new status,
+  If it is in the 2nd interval, then 2 is new status...,
+  If it is in the Nth interval, N is the new status
+  */
+  for(int kk=0; kk < K; kk++){
+    cum_prob = cum_prob + probs[kk];
+    if (draw < cum_prob){
+      multinom_draw = kk;
+      break;
+    }
+  }
+  return multinom_draw;
 
 }
+
+
+float float_rand( float min, float max ){
+    float scale = rand() / (float) RAND_MAX; /* [0, 1.0] */
+    return min + scale * ( max - min );      /* [min, max] */
+}
+
+
+
+
 
 
 /* Comipliation command
