@@ -25,6 +25,8 @@ void make_nbr_dict(int N, int E, int env[][E], GHashTable *dict);
 int find_infected_agents(int N, int t, int infection_state_cats[],
 			  int n_inf_states,
 			 int agent_status[][N], int init_inf_inds[]);
+int extract_neighbors(GHashTable* nbr_dict, int inf_ind, int nbr_inds[]);
+
 void initialize_base_probs(int T, int N, int K,
 			   int agent_status[][N],
 			   char base_probs_fn[],
@@ -53,8 +55,8 @@ void get_inf_probs(int n, int m,
 		   int sus_cats[],
 		   double infection_probs[][K][K],
 		   double updated_probs[]);
-int draw_multinom(float probs[], int K);
-float float_rand( float min, float max );
+int draw_multinom(double probs[], int K);
+double double_rand(double min, double max );
 
 // Printing helpers
 void prt(GArray* a);
@@ -113,12 +115,12 @@ int main(){
 	   env[nn][2]);
   }
 
-  GHashTable* dict = g_hash_table_new(g_int_hash, g_int_equal);
-  make_nbr_dict(N, E, env, dict);
+  GHashTable* nbr_dict = g_hash_table_new(g_int_hash, g_int_equal);
+  make_nbr_dict(N, E, env, nbr_dict);
 
-  printf("There are %d keys in the hash\n", g_hash_table_size(dict));
+  printf("There are %d keys in the hash\n", g_hash_table_size(nbr_dict));
 
-  g_hash_table_foreach(dict, print, NULL);
+  g_hash_table_foreach(nbr_dict, print, NULL);
 
   // Initialize base probabilities
   double base_probs[T][K][K];
@@ -146,9 +148,61 @@ int main(){
   print_array(init_inf_inds, n_inf_inds);
 
 
-  //  
+  // Actually loop over agents and infect them
+
+  double infection_probs[K][K][K];
+  // probs of infection
+  infection_probs[1][0][1] = 1.0; // chance of infected infecting
+  // susceptible to being infected is 1
+
+  int inf_ind;
+  int n_nbrs; // # of neighbors of current infected agent
+  int nbr_inds[N]; // indices of neighbors initialization
+  for(int ii=0; ii < n_inf_inds; ii++){
+    // Loop over infectious
+    // Loop over neigbhors
+    // Check if neighbor is susceptible
+    // Check if susceptible hasn't already been infected, e.g.
+    // agent_probs isn't 1 in an infectious category
+    // infect agent (e.g. update agent_probs)
 
 
+    inf_ind = init_inf_inds[ii];
+    printf("Extracting neighbors for agent %d\n", inf_ind);
+    n_nbrs = extract_neighbors(nbr_dict, inf_ind, nbr_inds);
+    printf("The neighbors are\n");
+    print_array(nbr_inds, n_nbrs);
+
+    
+    
+
+  }
+  
+
+
+}
+
+/*
+Extract the neighbors of the agent into an integer array.  also count the number
+INPUTS:
+nbr_dict dictionary of neighbors where the key is a GInt of the current agent index and the value is a g_slist of neighbor indices
+inf_ind -- integer index of current agent we are looking for neighbors of
+nbr_inds -- integer array of indices of neighbors from hashtable
+OUTPUT: modified nbr_inds and n_nbrs -- the total number of neighbors for this agent
+ */
+int extract_neighbors(GHashTable* nbr_dict, int inf_ind, int nbr_inds[]){
+  gint n_nbrs;
+  gpointer value;
+  gint* my_ind = g_new(gint, 1);
+  *my_ind = inf_ind;
+  printf("Agent index is %d\n", inf_ind);
+  value = g_hash_table_lookup(nbr_dict, GINT_TO_POINTER(my_ind));
+  n_nbrs = g_slist_length(value);
+  printf("The number of neighbors is %d\n", n_nbrs);
+  for(int ii=0; ii < n_nbrs; ii++){
+    nbr_inds[ii] = *(int*)g_slist_nth(value, ii)->data;
+  }
+  return n_nbrs;
 }
 
 void initialize_agents(int T, int N, int K,
@@ -396,21 +450,21 @@ void infect_agent(int n, int m,
 
   // Extract the probability of agent n infecting agent m, conditioned on environments, etc
   double updated_probs[K];
-  get_inf_probs(int n, int m,
-		int t, 
-		int N, int K,
-		int agent_status[][N],
-		int E, int env[][E],
-		int env_inds[],
-		int inf_cats[],
-		int sus_cats[],
-		double infection_probs[][K][K],
-		double updated_probs[]);
+  get_inf_probs(n, m,
+		t, 
+		N, K,
+		agent_status,
+		E, env,
+		env_inds,
+		inf_cats,
+		sus_cats,
+		infection_probs,
+		updated_probs);
   // Actually perform a multinomial draw to see whether agent was infected
   int new_sus_state;
-  new_sus_state = multinomial_draw(updated_probs, K);
+  new_sus_state = draw_multinom(updated_probs, K);
   // Update agent's new probabilities of transitioning. We ensure an infection by setting that state's probability to 1
-  for(kk=0; kk < K; kk++){
+  for(int kk=0; kk < K; kk++){
     if( kk == new_sus_state){
       agent_probs[m][kk] = 1.0;
     } else {
@@ -419,12 +473,61 @@ void infect_agent(int n, int m,
   }
 }
 
+
+
+/*
+Extract the relevant probabilities of an infectious agent in a certain state to a susceptible agent in another state of becoming infected. 
+INPUTS:
+n - index of infectious agent
+m - index of susceptible agent
+t - current time step, t=0, ..., T
+N - total number of agents
+K - total number of compartments
+agent_status TxN array where A_{tn} is agent n's current status at time t
+E - total number of environments
+env -  N x E array where entry
+  n,e is the nth agent's e^th environment assignment.  All 0s constitute a NULL assignment.
+env_inds - array of indices of environments agents share
+inf_cats- indices of states which correspond to infectious states
+sus_cats - indices of states which correspond to susceptible states
+infection_probs - KxKxK where entry ijk is probability of agent with status i infecting agent with status j to status k.  Should be a sparse matrix. As only entries ijk > 0 if i is an infectious state, j is a susceptible state.
+OUTPUTS: updated_probs a 1d array of length K which are the probabilities of an agent being infected 
+*/
+void get_inf_probs(int n, int m,
+		   int t, 
+		   int N, int K,
+		   int agent_status[][N],
+		   int E, int env[][E],
+		   int env_inds[],
+		   int inf_cats[],
+		   int sus_cats[],
+		   double infection_probs[][K][K],
+		   double updated_probs[]){
+  int inf_status;
+  int sus_status;
+  for(int kk=0; kk < K; kk++){
+    inf_status = agent_status[t][n];
+    sus_status = agent_status[t][m];
+    updated_probs[kk] = infection_probs[inf_status][sus_status][kk];
+  }
+
+  
+
+
+}
+
+
+
+
+
+
+
 /* Return an integer corresponding to the drawn multinomial
    category */
-int draw_multinom(float probs[], int K){
+int draw_multinom(double probs[], int K){
   int multinom_draw;
-  float cum_prob = 0.0;
-  float draw = float_rand(0.0, 1.0);
+  double cum_prob = 0.0;
+  double draw = double_rand(0.0, 1.0);
   /* If the draw is in the 1st interval of cumulative probability, then 1 is the new status,
   If it is in the 2nd interval, then 2 is new status...,
   If it is in the Nth interval, N is the new status
@@ -441,8 +544,8 @@ int draw_multinom(float probs[], int K){
 }
 
 
-float float_rand( float min, float max ){
-    float scale = rand() / (float) RAND_MAX; /* [0, 1.0] */
+double double_rand(double min, double max ){
+    double scale = rand() / (double) RAND_MAX; /* [0, 1.0] */
     return min + scale * ( max - min );      /* [min, max] */
 }
 
