@@ -31,7 +31,7 @@ void initialize_base_probs(int T, int N, int K,
 			   int agent_status[][N],
 			   char base_probs_fn[],
 			   double base_probs[][K][K]);
-void get_init_agent_probs(int T, int N, int K,
+void get_agent_probs(int T, int N, int K, int t,
 			   int agent_status[][N],
 			   double base_probs[][K][K],
 			   double agent_probs[][K]);
@@ -59,13 +59,14 @@ void get_inf_probs(int n, int m,
 int draw_multinom(double probs[], int K);
 double double_rand(double min, double max );
 
-int in_array(int agent_status, int N,
-	      int sus_state_cats[]);
+int in_array(int x, int a[],
+	      int N);
 int already_inf(int sus_ind, int K, int n_inf_states,
-		 double agent_probs[][K], inf_state_cats[]);
-void update_agents(int t, int N, double agent_probs, int agent_status[][N]);
+		double agent_probs[][K], int inf_state_cats[]);
+void update_agents(int t, int N, int K,
+		   double agent_probs[][K], int agent_status[][N]);
 
-void write_agents(char fn[], int N, int T, int agent_status[T][N]);
+void write_agents(char fn[], int N, int T, int agent_status[][N]);
 
 // Printing helpers
 void prt(GArray* a);
@@ -85,6 +86,7 @@ int main(){
   int init_inf_inds[N];
   int n_inf_inds = 0;
   int n_inf_states = 1;
+  int n_sus_states = 1;
 
   
 
@@ -140,7 +142,7 @@ int main(){
 			   base_probs);
 
   double agent_probs[N][K]; // prob of transitioning from current state to state k
-  get_init_agent_probs(T, N, K,
+  get_agent_probs(T, N, K, 0,
 		       agent_status,
 		       base_probs,
 		       agent_probs);
@@ -168,8 +170,9 @@ int main(){
   int sus_ind;
   int n_nbrs; // # of neighbors of current infected agent
   int nbr_inds[N]; // indices of neighbors initialization
+  int env_inds[E];
 
-  for(int t=0; t < T; t++){
+  for(int t=0; t < T ; t++){
     for(int ii=0; ii < n_inf_inds; ii++){
       // Loop over infectious
       // Loop over neigbhors
@@ -180,42 +183,57 @@ int main(){
 
 
       inf_ind = init_inf_inds[ii];
-      printf("Extracting neighbors for agent %d\n", inf_ind);
+      printf("\nExtracting neighbors for agent %d\n", inf_ind);
       n_nbrs = extract_neighbors(nbr_dict, inf_ind, nbr_inds);
       printf("The neighbors are\n");
       print_array(nbr_inds, n_nbrs);
     
       for(int jj=0; jj < n_nbrs; jj++){
 	sus_ind = nbr_inds[jj];
+	printf("the neighbor index is %d\n", sus_ind);
 	// check if agent is currently in susceptible state
-	if (in_array(agent_status[t][sus_ind], N,
-		     sus_state_cats) == 1){
+	if (in_array(agent_status[t][sus_ind], 
+		     sus_state_cats, n_sus_states) == 1){
+	  printf("neighbor %d is susceptible\n", sus_ind);
 	  // check if agent is not already infected by another agent
-	  if(!already_inf(sus_ind, K, n_inf_states
-			  agent_probs, inf_state_cats)){
+	  if(already_inf(sus_ind, K, n_inf_states,
+			 agent_probs, inf_state_cats) != 1){
+	    printf("neighbor %d is not already infected\n", sus_ind);
+	    
 	    infect_agent(inf_ind, sus_ind,
 			 t, 
 			 N, K,
 			 agent_status,
 			 E, env,
-			 env_inds
+			 env_inds,
 			 inf_state_cats,
 			 sus_state_cats,
 			 infection_probs,
-			 agent_probs)
+			 agent_probs);
 	      }
 	}
       }
     }
+    printf("after interacting at time step %d, agent probs of transition conditioned on current state\n", t);
+    print_2d_array(N, K, agent_probs);
+    
     // Do draws to see how agents update based on their probs
-    update_agents(t, N, agent_probs, agent_status);
+    printf("Updating agents!\n");
+    update_agents(t, N, K,  agent_probs, agent_status);
     // Update the infectious indices
-    n_inf_inds = find_infected_agents(N, 0, inf_state_cats,
+    n_inf_inds = find_infected_agents(N, t, inf_state_cats,
 				      n_inf_states, agent_status,
 				      init_inf_inds);
+    // Update agent probs
+    get_agent_probs(T, N, K, t+1,
+		    agent_status,
+		    base_probs,
+		    agent_probs);
+
 
   }
-  write_agents(fn, N, T, agent_status);
+  char fn[] = "agents-out.csv";
+  write_agents(fn, N, T+1, agent_status);
   
 
 
@@ -245,37 +263,72 @@ An agent is infected if there is an entry of 1.0 in an infectious state
 INPUTS: 
 sus_ind -- index of susceptible agent in agent_probs
 K -- number of compartments
+n_inf_states -- total number of infectious states
 agent_probs N x K array of transition probabilities
 inf_state_cats -- array of category numbers of infectious states
+OUTPUTS: 1 if agent is already infected and zero otherwise
  */
 int already_inf(int sus_ind, int K, int n_inf_states,
-		 double agent_probs[][K], inf_state_cats[]){
+		double agent_probs[][K], int inf_state_cats[]){
   for(int kk=0; kk < K; kk++){
-    for(int jj=0; jj < n_inf_states; jj++){
       // If agent both has prob 1 of transitioning and
       // that 1.0 is to an infectious state
-      if((agent_probs[sus_ind][kk] == 1.0) &
-	 (in_array(kk, inf_state_cats, K) == 1){
-	return 1;
-      }
+
+    print_array(inf_state_cats, n_inf_states);
+    if((agent_probs[sus_ind][kk] == 1.0) &&
+       (in_array(kk, inf_state_cats, n_inf_states) == 1)){
+      printf("category is %d\n", kk);
+      printf("prob of transitioning to %d is %.2f\n",
+	     kk, agent_probs[sus_ind][kk]);
+      printf("agent %d is already infected\n", sus_ind);
+      return 1;
     }
   }
   return 0;
 }
-
+    
 /*
- */
-void update_agents(int t, int N,
-		   double agent_probs,
+  (Potentially) Change states of agents states at the next time step (t+1)
+  INPUTS:
+  t -- current time step
+  N -- total number of agents
+  K -- totalnumber of compartments
+  agent_probs -- NxK array of probabilities of updating for each agent conditioned on their current state
+  agent_status -- TxN array of agent's status at time t
+  OUTPUTS: modified agent_status with new agent states at time t+1
+*/
+void update_agents(int t, int N, int K,
+		   double agent_probs[][K],
 		   int agent_status[][N]){
-
+  double probs[K];
+  for(int ii=0; ii < N; ii++){
+    for(int kk=0; kk < K; kk++){
+      probs[kk] = agent_probs[ii][kk];
+    }
+    agent_status[t+1][ii] = draw_multinom(probs, K);
+  }
 }
 
 /*
+Write out agents to a csv
+Rows are time steps
+Columns are agents
+
  */
 void write_agents(char fn[], int N, int T,
-		  int agent_status[T][N]){
+		  int agent_status[][N]){
+  printf("Writing out agents to %s\n", fn );
 
+  FILE *f = fopen(fn, "w");
+  for (int tt=0; tt < T; tt++){
+    for (int ii=0; ii < N; ii++){
+      fprintf(f, "%d,", agent_status[tt][ii]);
+      fflush(stdout);
+    }
+    fprintf(f, "\n");
+    fflush(stdout);
+  }
+  fclose(f);
 }
 
 
@@ -479,8 +532,8 @@ void initialize_base_probs(int T, int N, int K,
  
     // Hard coded for a SIR model with 50% of transitioning from S to I and I to R
     for(int tt=0; tt < T; tt++){ // Some S move to I and I move to R, All R to R
-      base_probs[tt][0][0] = 0.5;
-      base_probs[tt][0][1] = 0.5;
+      base_probs[tt][0][0] = 1.0;
+      base_probs[tt][0][1] = 0.0;
       base_probs[tt][0][2] = 0.0;
       base_probs[tt][1][0] = 0.0;
       base_probs[tt][1][1] = 0.5;
@@ -499,20 +552,21 @@ INPUTS:
 T - total number of time steps
 N - total number of agents
 K - total number of compartments
+t - current time step
 agent_status - TxN array of agent status where entry A_{tn} \in {1, \dots, K} is the agent n's status at time t
 base_probs - TxKxK array where entry A_{tij} is the probability of transitioning from compartment i to j at time t to t+1. 
 agent_probs - NxK array where entry A_{nk} is agent n's probability of transitioning to state k conditioned on their current state.  This is also the pointer for the object that will be modified
 OUTPUT: updated agent_probs initialized at time t=0
  */
-void get_init_agent_probs(int T, int N, int K,
+void get_agent_probs(int T, int N, int K, int t,
 			  int agent_status[][N],
 			  double base_probs[][K][K],
 			  double agent_probs[N][K]){
   int current_status;
   for(int ii = 0; ii < N; ii++){
     for(int kk=0; kk < K; kk++){
-      current_status = agent_status[0][ii];
-      agent_probs[ii][kk] = base_probs[0][current_status][kk];
+      current_status = agent_status[t][ii];
+      agent_probs[ii][kk] = base_probs[t][current_status][kk];
     }
   }
 }
@@ -547,6 +601,7 @@ void infect_agent(int n, int m,
 		  double agent_probs[][K]){
 
   // Extract the probability of agent n infecting agent m, conditioned on environments, etc
+  printf("interacting infected agent %d and susceptible agent %d\n", n, m);
   double updated_probs[K];
   get_inf_probs(n, m,
 		t, 
@@ -558,9 +613,15 @@ void infect_agent(int n, int m,
 		sus_cats,
 		infection_probs,
 		updated_probs);
+  printf("Agent %d's new probs of transitioning are\n", m);
   // Actually perform a multinomial draw to see whether agent was infected
+  for(int kk=0; kk < K; kk++){
+    printf("%.2f ", updated_probs[kk]);
+  }
+  printf("\n");
   int new_sus_state;
   new_sus_state = draw_multinom(updated_probs, K);
+  printf("agent %d's new state is going to be %d\n", m, new_sus_state);
   // Update agent's new probabilities of transitioning. We ensure an infection by setting that state's probability to 1
   for(int kk=0; kk < K; kk++){
     if( kk == new_sus_state){
