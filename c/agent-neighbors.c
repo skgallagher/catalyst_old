@@ -55,8 +55,17 @@ void get_inf_probs(int n, int m,
 		   int sus_cats[],
 		   double infection_probs[][K][K],
 		   double updated_probs[]);
+
 int draw_multinom(double probs[], int K);
 double double_rand(double min, double max );
+
+int in_array(int agent_status, int N,
+	      int sus_state_cats[]);
+int already_inf(int sus_ind, int K, int n_inf_states,
+		 double agent_probs[][K], inf_state_cats[]);
+void update_agents(int t, int N, double agent_probs, int agent_status[][N]);
+
+void write_agents(char fn[], int N, int T, int agent_status[T][N]);
 
 // Printing helpers
 void prt(GArray* a);
@@ -71,8 +80,8 @@ int main(){
   int K = 3; // number of states
   int agent_status[T][N];
   int init_state_counts[] = {9, 1, 0}; // S=9, I = 1, R =0
-  int infection_state_cats[] = {1}; // 1 is the only infection state
-  int susceptible_state_cats[] = {0}; //0 is the only susceptible state
+  int inf_state_cats[] = {1}; // 1 is the only infection state
+  int sus_state_cats[] = {0}; //0 is the only susceptible state
   int init_inf_inds[N];
   int n_inf_inds = 0;
   int n_inf_states = 1;
@@ -142,7 +151,7 @@ int main(){
 
   // Find the initial infected agents
 
-  n_inf_inds = find_infected_agents(N, 0, infection_state_cats,
+  n_inf_inds = find_infected_agents(N, 0, inf_state_cats,
 		       n_inf_states, agent_status,
 		       init_inf_inds);
   print_array(init_inf_inds, n_inf_inds);
@@ -156,31 +165,120 @@ int main(){
   // susceptible to being infected is 1
 
   int inf_ind;
+  int sus_ind;
   int n_nbrs; // # of neighbors of current infected agent
   int nbr_inds[N]; // indices of neighbors initialization
-  for(int ii=0; ii < n_inf_inds; ii++){
-    // Loop over infectious
-    // Loop over neigbhors
-    // Check if neighbor is susceptible
-    // Check if susceptible hasn't already been infected, e.g.
-    // agent_probs isn't 1 in an infectious category
-    // infect agent (e.g. update agent_probs)
+
+  for(int t=0; t < T; t++){
+    for(int ii=0; ii < n_inf_inds; ii++){
+      // Loop over infectious
+      // Loop over neigbhors
+      // Check if neighbor is susceptible
+      // Check if susceptible hasn't already been infected, e.g.
+      // agent_probs isn't 1 in an infectious category
+      // infect agent (e.g. update agent_probs)
 
 
-    inf_ind = init_inf_inds[ii];
-    printf("Extracting neighbors for agent %d\n", inf_ind);
-    n_nbrs = extract_neighbors(nbr_dict, inf_ind, nbr_inds);
-    printf("The neighbors are\n");
-    print_array(nbr_inds, n_nbrs);
-
+      inf_ind = init_inf_inds[ii];
+      printf("Extracting neighbors for agent %d\n", inf_ind);
+      n_nbrs = extract_neighbors(nbr_dict, inf_ind, nbr_inds);
+      printf("The neighbors are\n");
+      print_array(nbr_inds, n_nbrs);
     
-    
+      for(int jj=0; jj < n_nbrs; jj++){
+	sus_ind = nbr_inds[jj];
+	// check if agent is currently in susceptible state
+	if (in_array(agent_status[t][sus_ind], N,
+		     sus_state_cats) == 1){
+	  // check if agent is not already infected by another agent
+	  if(!already_inf(sus_ind, K, n_inf_states
+			  agent_probs, inf_state_cats)){
+	    infect_agent(inf_ind, sus_ind,
+			 t, 
+			 N, K,
+			 agent_status,
+			 E, env,
+			 env_inds
+			 inf_state_cats,
+			 sus_state_cats,
+			 infection_probs,
+			 agent_probs)
+	      }
+	}
+      }
+    }
+    // Do draws to see how agents update based on their probs
+    update_agents(t, N, agent_probs, agent_status);
+    // Update the infectious indices
+    n_inf_inds = find_infected_agents(N, 0, inf_state_cats,
+				      n_inf_states, agent_status,
+				      init_inf_inds);
 
   }
+  write_agents(fn, N, T, agent_status);
   
 
 
 }
+
+
+/* Find out if first argument is in the array of the second.  integer version
+INPUTS: 
+x -- some integer
+a -- some integer array
+N -- length of a
+OUTPUT:
+1 if x is in a and 0 otherwise
+ */
+int in_array(int x,
+	     int a[], int N){
+  for(int ii=0; ii < N; ii++){
+    if(a[ii] == x){
+      return 1;
+    }
+  }
+  return 0;
+}
+
+/* Check to see if agent is already infected based on their agent_probs
+An agent is infected if there is an entry of 1.0 in an infectious state
+INPUTS: 
+sus_ind -- index of susceptible agent in agent_probs
+K -- number of compartments
+agent_probs N x K array of transition probabilities
+inf_state_cats -- array of category numbers of infectious states
+ */
+int already_inf(int sus_ind, int K, int n_inf_states,
+		 double agent_probs[][K], inf_state_cats[]){
+  for(int kk=0; kk < K; kk++){
+    for(int jj=0; jj < n_inf_states; jj++){
+      // If agent both has prob 1 of transitioning and
+      // that 1.0 is to an infectious state
+      if((agent_probs[sus_ind][kk] == 1.0) &
+	 (in_array(kk, inf_state_cats, K) == 1){
+	return 1;
+      }
+    }
+  }
+  return 0;
+}
+
+/*
+ */
+void update_agents(int t, int N,
+		   double agent_probs,
+		   int agent_status[][N]){
+
+}
+
+/*
+ */
+void write_agents(char fn[], int N, int T,
+		  int agent_status[T][N]){
+
+}
+
+
 
 /*
 Extract the neighbors of the agent into an integer array.  also count the number
