@@ -126,6 +126,8 @@ Although the above working prototype is simple, it is modular in many aspects.
 + Store both a single probability and multiple probabilities for agents, ... likely not stored at each step
 + Visualize outputs in R
 ** TODO <2018-01-29 Mon> - <2018-02-03 Sat>
++ Optimization of an SIR-ODE to solve for params
+  + nelder-mead gsl
 + Use SIR base probabilities in current model
 + Learn how to use multiple files, headers, and libraries
 + Make file??
