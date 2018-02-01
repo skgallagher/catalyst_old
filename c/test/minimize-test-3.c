@@ -29,13 +29,17 @@ Want to find {b0, b1}
 double extract_ft(double t, int p, int S, int P,
 		  double f_mat[][P+1], double eps);
 double abs_val(double x);
+void optimize_ode(int S, int P, int D, double data[][P+1],
+		  double init_params[], double thresh,
+		  double init_step_size, int n_iters,
+		  int print_steps, double best_params[]);
 
 
-
+// TODO: lin reg -> some ode.
 /* 
 First make function based on parameters
 f(x; b0, b1) that returns matrix from steps x[0], x[1], ..., x[S]
-x - S x P+1 array of data where first col is time
+x - S x P+1 array of data where first col is time (which is really what we need)
 p = [b0, b1]
 S = total number of obs
 P = total number of dimensions to minimize genrally 1
@@ -195,12 +199,104 @@ double abs_val(double x){
 }
 
 
+
+
+
 void print_float_1d(int N, double a[]){
   for(int ii=0; ii < N; ii++){
     printf("%.2f ", a[ii]);
   }
   printf("\n");
 }
+
+
+/* Wrapper for the Nelder-Mead optimization for a function with unknown gradient provided by gsl.  The cost function is SSE.
+INPUTS:
+S - total number of time steps in the data (can be duplicate times)
+P - total number of Ys (usually 1.  3 in the SIR case, 4 in SEIR, etc)
+D - Dimension of parameters to be optimized
+data - Sx(P+1) where first column is the time and the following columns are the different observed Ys.
+init_params - our initial guesses for the parameters.
+thresh - threshold of error to be optimized too.  Smaller will require more steps but more accuracy.  Default is .001
+init_step_size - how large initial steps N-M should take.  Default is 1.0
+n_iters - max amount of iterations to be done by NM
+print_steps - if 1 we will print out the steps of optimization
+best_params - array of length D.  array to be returned with optimized params
+OUTPUTS:
+best_params array of length D with the minimized parameters
+*/
+void optimize_ode(int S, int P, int D, double data[][P+1],
+		  double init_params[], double thresh,
+		  double init_step_size, int n_iters,
+		  int print_steps, double best_params[]){
+
+  // Put data into the form of params
+  double params[3 + D + S * (P+1)]; // 3 for length of {S, P, D}
+  data_to_params(D, S, P, init_params,
+		 data, params);
+    
+  /*NELDER-MEAD simplex minimization.  Don't need deriv */
+  const gsl_multimin_fminimizer_type *T =
+    gsl_multimin_fminimizer_nmsimplex2;
+  gsl_multimin_fminimizer *s = NULL;
+  gsl_vector *ss, *x;
+  gsl_multimin_function minex_func;
+
+  size_t iter = 0;
+  int status;
+  double size;
+  /* Starting point */
+  x = gsl_vector_alloc(D);
+  for(int ii=0; ii < D; ii++){
+    gsl_vector_set(x, ii, init_params[ii]);
+  }
+  /* Set initial step sizes to 1 */
+  ss = gsl_vector_alloc(D);
+  gsl_vector_set_all(ss, 1);
+  /* Initialize method and iterate */
+  minex_func.n = D;
+  minex_func.f = sum_squares;
+  minex_func.params = params;
+  s = gsl_multimin_fminimizer_alloc(T, D);
+  gsl_multimin_fminimizer_set(s, &minex_func, x, ss);
+  do
+    {
+      iter++;
+      status = gsl_multimin_fminimizer_iterate(s);
+      if (status)
+	break;
+      size = gsl_multimin_fminimizer_size(s);
+      status = gsl_multimin_test_size(size, thresh);  // threshold
+      if(print_steps == 1){
+	if (status == GSL_SUCCESS){
+	    printf ("converged to minimum at\n");
+	}
+	printf("%5d ", iter);
+	for(int ii=0; ii < D; ii++){
+	  printf("%10.3e ", gsl_vector_get(s->x, ii));
+	}
+	printf("SSE = %7.3f size = %.3f\n", s->fval, size);
+      }
+    }
+  while (status == GSL_CONTINUE && iter < n_iters);
+
+  if(iter >= n_iters){
+    printf("WARNING: Optimization did not converge\n");
+  }
+  for(int ii=0; ii < D; ii++){
+    best_params[ii] = gsl_vector_get(s->x, ii);
+  }
+  
+  gsl_vector_free(x);
+  gsl_vector_free(ss);
+  gsl_multimin_fminimizer_free (s);
+
+  
+  
+
+}
+
+
 
 int main(void){
   int S = 4, P = 1;
@@ -232,85 +328,20 @@ int main(void){
 		 data, params);
   params_to_data(params, S, P, data);
 
-
-  /* // testing sum of squares innards */
-  /* // extract the min_vars from v */
-  /* double min_vars[D]; */
-  /* min_vars[0] = 0.0; */
-  /* min_vars[1] = 5.0; */
+  // trying the wrapper
+  double init_params[2] = {-4.0, 92.0};
+  double thresh = 1e-3;
+  double init_step_size = 1.0;
+  double n_iters = 1000;
+  int print_steps = 1;
+  double best_params[D];
+  optimize_ode(S, P, D, data,
+	       init_params, thresh,
+	       init_step_size, n_iters,
+	       print_steps, best_params);
   
-  
-  /* // Compute the true function given v */
-  /* lin_reg(S, P, data, */
-  /* 	  min_vars, f_mat); */
-
-  /* printf("applying linear regression\n"); */
-  /* print_float_2d(S, P+1, f_mat); */
-
-  /* // the actual sum of squares */
-  /* double SSE = 0.0; */
-  /* double f_tp = 0.0; */
-  /* double eps = 1e-4; */
-  /* for(int ss=0; ss < S; ss++){ */
-  /*   for(int pp=1; pp < (P+1); pp++){ */
-  /*     double t; */
-  /*     t = data[ss][0]; */
-  /*     f_tp = extract_ft(t, pp, S, P, f_mat, eps); */
-  /*     SSE = SSE + pow(data[ss][pp] - f_tp, 2); */
-  /*   } */
-  /* } */
-  /* printf("SSE: %.2f\n", SSE); */
-
-
-  // optimizing stuff
-  // TODO: write a wrapper
-  /*NELDER MEAD simplex minimization.  Don't need deriv */
-  const gsl_multimin_fminimizer_type *T =
-    gsl_multimin_fminimizer_nmsimplex2;
-  gsl_multimin_fminimizer *s = NULL;
-  gsl_vector *ss, *x;
-  gsl_multimin_function minex_func;
-
-  size_t iter = 0;
-  int status;
-  double size;
-  /* Starting point */
-  x = gsl_vector_alloc (2);
-  gsl_vector_set (x, 0, 0.0);
-  gsl_vector_set (x, 1, 5.0);
-  /* Set initial step sizes to .1 */
-  ss = gsl_vector_alloc (2);
-  gsl_vector_set_all (ss, .1);
-  /* Initialize method and iterate */
-  minex_func.n = 2;
-  minex_func.f = sum_squares;
-  minex_func.params = params;
-  s = gsl_multimin_fminimizer_alloc (T, 2);
-  gsl_multimin_fminimizer_set (s, &minex_func, x, ss);
-  do
-    {
-      iter++;
-      status = gsl_multimin_fminimizer_iterate(s);
-      if (status)
-	break;
-      size = gsl_multimin_fminimizer_size (s);
-      status = gsl_multimin_test_size (size, 1e-4);  // threshold
-      if (status == GSL_SUCCESS)
-	{
-	  printf ("converged to minimum at\n");
-	}
-      printf ("%5d %10.3e %10.3e SSE = %7.3f size = %.3f\n",
-	      iter,
-	      gsl_vector_get (s->x, 0),
-	      gsl_vector_get (s->x, 1),
-	      s->fval, size);
-    }
-  while (status == GSL_CONTINUE && iter < 1000);
-  gsl_vector_free(x);
-  gsl_vector_free(ss);
-  gsl_multimin_fminimizer_free (s);
-  return status;
-
   
   return 0;
+  
+
 }
