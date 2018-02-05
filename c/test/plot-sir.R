@@ -1,10 +1,9 @@
 ## SKG
 ## Plotting SIR from C
 
-df <- read.table("sir.txt")
-colnames(df) <- c("t", "S", "I")
+df <- read.table("sir-test-a.txt")
+colnames(df) <- c("t", "S", "I", "R")
 N <- df$S[1] + df$I[1]
-df$R <- N - df$S - df$I
 head(df)
 
 plot(c(1,1), type = "n", ylim =c(0,1), xlim = range(df$t))

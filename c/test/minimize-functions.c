@@ -35,7 +35,7 @@ void lin_reg(int S, int P, double x[][P+1],
 void print_float_2d(int M, int N, double a[M][N]){
   for(int ii=0; ii < M; ii++){
     for(int jj=0; jj < N; jj++){
-      printf("%.1f ", a[ii][jj]);
+      printf("%.2f ", a[ii][jj]);
     }
     printf("\n");
   }
