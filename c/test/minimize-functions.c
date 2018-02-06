@@ -10,6 +10,7 @@ SKG
 #include <gsl/gsl_multimin.h>
 #include <math.h>
 #include "minimize-functions.h"
+#include "sir-functions.h"
 
 // TODO: lin reg -> some ode.
 /* 
@@ -112,7 +113,7 @@ double sum_squares(const gsl_vector *v, void *params){
   
   // Compute the true function given v
   double f_mat[S][P+1];
-  lin_reg(S, P, data,
+  ode_wrapper(S, P, data,
 	  min_vars, f_mat);
   
   //printf("lin reg with those vals\n");
