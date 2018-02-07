@@ -102,7 +102,7 @@ void ode_wrapper(int S, int P, double x[][P+1],
     f_mat[ss][0] = x[ss][0];
   }
 
-  printf("S is %d\n", S);
+  //  printf("S is %d\n", S);
   tmin = x[0][0];		/* starting t value */
   tmax = x[S][0];	        /* final t value */
   delta_t = .01;

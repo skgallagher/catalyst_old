@@ -113,8 +113,8 @@ double sum_squares(const gsl_vector *v, void *params){
   ode_wrapper(S - 1, P, data,
 	  min_vars, f_mat);
   
-  printf("ode with those vals\n");
-  print_float_2d(S, P+1, f_mat);
+  //  printf("ode with those vals\n");
+  //  print_float_2d(S, P+1, f_mat);
 
   // the actual sum of squares
   double SSE = 0.0;
