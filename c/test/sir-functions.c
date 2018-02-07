@@ -12,6 +12,7 @@ Compile and link with:
 gcc sir-functions.c minimize-functions.c -lgsl -lgslcblas -lm -o run-sir
 
 TODO:
+ Don't hard code derivatives
  */
 
 #include <stdio.h>
@@ -63,9 +64,12 @@ void ode_wrapper(int S, int P, double x[][P+1],
 
   gsl_odeiv_system my_system;	/* structure with the rhs function, etc. */
 
+  //printf("current data in ode_wrapper\n");
+  // print_float_2d(S, P+1, x);
   // TODO: make generic
   struct sir disease_params;
-  
+
+  // printf("beta %.3f gamma %.3f\n", p[0], p[1]);
   disease_params.params[0] = p[0]; // beta
   disease_params.params[1] = p[1]; // gamma
   double N = 0.;
@@ -86,27 +90,37 @@ void ode_wrapper(int S, int P, double x[][P+1],
   my_system.dimension = dimension;	/* number of diffeq's */
   my_system.params = &disease_params;	/* parameters to pass to rhs and jacobian */
 
-  tmin = x[0][0];		/* starting t value */
-  tmax = x[S][0];	        /* final t value */
-  delta_t = .1;
+ 
     
   for(int ii=0; ii < P; ii++){
     y[ii] = x[0][ii + 1]; // Initial values taken from data at time 0
     f_mat[0][ii+1] = x[0][ii+1];
   }
-  
+
+  // put time steps in f_mat
+  for(int ss=0; ss < S+1; ss++){
+    f_mat[ss][0] = x[ss][0];
+  }
+
+  printf("S is %d\n", S);
+  tmin = x[0][0];		/* starting t value */
+  tmax = x[S][0];	        /* final t value */
+  delta_t = .01;
   t = tmin;             /* initialize t */
   int ss = 1;
   /* step to tmax from tmin */
+   printf("tmax %.5f\n", tmax);
   for (t_next = tmin + delta_t; t_next <= tmax; t_next += delta_t){
     while (t < t_next){	/* evolve from t to t_next */
 	gsl_odeiv_evolve_apply (evolve_ptr, control_ptr, step_ptr,
 				&my_system, &t, t_next, &h, y);
     }
+    //    printf("t %.3f\n", t);
     // add to matrix if proper step size
-    if(abs_val(f_mat[ss][0] - t) < .0001){
+    if(abs_val(f_mat[ss][0] - t) < .000001){
       for(int ii=0; ii < (P); ii++){
 	f_mat[ss][ii+1] = y[ii];
+	//	printf("ss %d t %.3f ii %d\n", ss, t, ii);
       }
       ss = ss+1;
     }
@@ -140,7 +154,8 @@ int rhs (double t, const double y[], double f[], void *params_ptr){
   double beta = my_params_pointer->params[0];
   double gamma = my_params_pointer->params[1];
   double N = my_params_pointer->N;
-  
+
+  //  printf("beta %.3f gamma %.3f N %3f\n", beta, gamma, N);
     
   /* evaluate the right-hand-side functions at t */
   f[0] = -beta * y[0] * y[1] / N;

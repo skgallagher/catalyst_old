@@ -36,7 +36,7 @@ void lin_reg(int S, int P, double x[][P+1],
 void print_float_2d(int M, int N, double a[M][N]){
   for(int ii=0; ii < M; ii++){
     for(int jj=0; jj < N; jj++){
-      printf("%.2f ", a[ii][jj]);
+      printf("%.6f ", a[ii][jj]);
     }
     printf("\n");
   }
@@ -92,50 +92,47 @@ double sum_squares(const gsl_vector *v, void *params){
   int D = (int)p[0];
   int S = (int)p[1];
   int P = (int)p[2];
-  double betas[D];
-  for(int dd=0; dd < D; dd++){
-    betas[dd] = p[dd + 3];
-  }
   double data[S][P+1];
   params_to_data(p, S, P,
 		 data);
-  //  printf("converted data\n");
-  //  print_float_2d(S, P+1, data);
+  //printf("converted data\n");
+  //print_float_2d(S, P+1, data);
 
   // extract the min_vars from v
   double min_vars[D];
   for(int ii=0; ii < D; ii++){
     min_vars[ii] = gsl_vector_get(v, ii);
   }
-  //  printf("Trying b0=%.1f, b1=%.1f\n",
-  //	 min_vars[0], min_vars[1]);
+  printf("Trying beta=%.4f, gamma=%.4f\n", 
+	 min_vars[0], min_vars[1]); 
   
   
-  // Compute the true function given v
+   // Compute the true function given min_vars
+   // TODO: there isa dimension gap
   double f_mat[S][P+1];
-  ode_wrapper(S, P, data,
+  ode_wrapper(S - 1, P, data,
 	  min_vars, f_mat);
   
-  //printf("lin reg with those vals\n");
-  //print_float_2d(S, P+1, f_mat);
+  printf("ode with those vals\n");
+  print_float_2d(S, P+1, f_mat);
 
   // the actual sum of squares
   double SSE = 0.0;
-  double f_tp;
-  for(int ss=0; ss < S; ss++){
+  double f_tp=0.;
+  for(int ss=0; ss < S+1; ss++){
     for(int pp=1; pp < (P+1); pp++){
       f_tp=100.0;
       double t;
       t = data[ss][0];
       double eps = 1e-4;
-      f_tp = extract_ft(t, pp, S, P, f_mat, eps);
-      //printf("f_tp=%.2f\n", f_tp);
-      SSE = SSE + pow(data[ss][pp] - f_tp, 2);
-      //printf("data=%.2f fxn=%.2f\n", data[ss][pp], f_tp);
-      // printf("t=%.2f, SSE=%.2f\n", t, SSE);
+      //f_tp = extract_ft(t, pp, S, P, f_mat, eps);
+      //printf("f_tp=%.4f\n", f_tp);
+      SSE = SSE + pow(data[ss][pp] - f_mat[ss][pp], 2);
+      //      printf("data=%.2f fxn=%.2f\n", data[ss][pp], f_tp);
+      //   printf("t=%.2f, SSE=%.2f\n", t, SSE);
     }
   }
-  //  printf("SSE: %.3f\n", SSE);
+  //printf("SSE: %.3f\n", SSE);
   return SSE;
 }
 
@@ -155,10 +152,14 @@ proper value of the function in column p and time t
 double extract_ft(double t, int p, int S, int P,
 		  double f_mat[][P+1], double eps){
   for (int ss=0; ss < S; ss++){
+    // printf("s=%d, t=%.2f, f=%.2f\n", ss, t, f_mat[ss][p+1]);
     if( abs_val(f_mat[ss][0] - t) < eps){
       // printf("returning val\n");
-      // printf("s=%d, t=%.2f, f=%.2f\n", ss, t, f_mat[ss][p+1]);
+      //      printf("s=%d, t=%.2f, f=%.2f\n", ss, t, f_mat[ss][p+1]);
       return f_mat[ss][p];
+    } else{
+      //printf("nothing\n");
+      return 0.;
     }
   }
 }
@@ -228,7 +229,7 @@ void optimize_ode(int S, int P, int D, double data[][P+1],
   }
   /* Set initial step sizes to 1 */
   ss = gsl_vector_alloc(D);
-  gsl_vector_set_all(ss, 1);
+  gsl_vector_set_all(ss, init_step_size);
   /* Initialize method and iterate */
   minex_func.n = D;
   minex_func.f = sum_squares;
@@ -249,9 +250,9 @@ void optimize_ode(int S, int P, int D, double data[][P+1],
 	}
 	printf("%5d ", iter);
 	for(int ii=0; ii < D; ii++){
-	  printf("%10.3e ", gsl_vector_get(s->x, ii));
+	  printf("%.4f ", gsl_vector_get(s->x, ii));
 	}
-	printf("SSE = %7.3f size = %.3f\n", s->fval, size);
+	printf("SSE = %7.3f size = %.4f\n", s->fval, size);
       }
     }
   while (status == GSL_CONTINUE && iter < n_iters);
