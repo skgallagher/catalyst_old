@@ -62,7 +62,7 @@ int main(void){
   }
 
   printf("observed data is\n");
-  print_float_2d(T+1, P+1, data);
+  // print_float_2d(T+1, P+1, data);
 
   double data2[T+1][P+1];
   ode_wrapper(T, P, data, p, data2);

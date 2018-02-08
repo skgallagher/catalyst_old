@@ -109,7 +109,7 @@ void ode_wrapper(int S, int P, double x[][P+1],
   t = tmin;             /* initialize t */
   int ss = 1;
   /* step to tmax from tmin */
-   printf("tmax %.5f\n", tmax);
+  //   printf("tmax %.5f\n", tmax);
   for (t_next = tmin + delta_t; t_next <= tmax; t_next += delta_t){
     while (t < t_next){	/* evolve from t to t_next */
 	gsl_odeiv_evolve_apply (evolve_ptr, control_ptr, step_ptr,

@@ -103,8 +103,8 @@ double sum_squares(const gsl_vector *v, void *params){
   for(int ii=0; ii < D; ii++){
     min_vars[ii] = gsl_vector_get(v, ii);
   }
-  printf("Trying beta=%.4f, gamma=%.4f\n", 
-	 min_vars[0], min_vars[1]); 
+  /* printf("Trying beta=%.4f, gamma=%.4f\n",  */
+  /* 	 min_vars[0], min_vars[1]);  */
   
   
    // Compute the true function given min_vars
@@ -161,17 +161,6 @@ double extract_ft(double t, int p, int S, int P,
       //printf("nothing\n");
       return 0.;
     }
-  }
-}
-
-/*
-Absolute value function for a double x
- */
-double abs_val(double x){
-  if( x < 0.0){
-    return -1.0 * x;
-  } else{
-    return x;
   }
 }
 
