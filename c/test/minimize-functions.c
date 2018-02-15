@@ -11,6 +11,7 @@ SKG
 #include <math.h>
 #include "minimize-functions.h"
 #include "sir-functions.h"
+#include "helper-functions.h"
 
 // TODO: lin reg -> some ode.
 /* 
@@ -32,15 +33,6 @@ void lin_reg(int S, int P, double x[][P+1],
   }
 }
 
-
-void print_float_2d(int M, int N, double a[M][N]){
-  for(int ii=0; ii < M; ii++){
-    for(int jj=0; jj < N; jj++){
-      printf("%.6f ", a[ii][jj]);
-    }
-    printf("\n");
-  }
-}
 
 
 /* there's probably a better way to call the params as a struct or something but oh well
@@ -95,85 +87,96 @@ double sum_squares(const gsl_vector *v, void *params){
   double data[S][P+1];
   params_to_data(p, S, P,
 		 data);
-  //printf("converted data\n");
-  //print_float_2d(S, P+1, data);
+  /* printf("converted data\n"); */
+  /* print_float_2d(S, P+1, data); */
 
-  // extract the min_vars from v
+  // Extract the min_vars from v
   double min_vars[D];
   for(int ii=0; ii < D; ii++){
     min_vars[ii] = gsl_vector_get(v, ii);
   }
-  /* printf("Trying beta=%.4f, gamma=%.4f\n",  */
-  /* 	 min_vars[0], min_vars[1]);  */
+   /* printf("Trying beta=%.4f, gamma=%.4f\n", */
+   /* 	 min_vars[0], min_vars[1]); */
+
+  // Get max T
+  double T;
+
+  T = data[S-1][0];
+  /* printf("T is %.3f\n", T); */
+  /* printf("S is %d\n", S); */
   
+  // Extract initial values and N
+  double N;
+  double init_vals[P];
+  for(int ii=0; ii < P; ii++){
+    N = N + data[0][ii+1];
+    init_vals[ii] = data[0][ii+1];
+  }
   
    // Compute the true function given min_vars
-   // TODO: there isa dimension gap
-  double f_mat[S][P+1];
-  ode_wrapper(S - 1, P, data,
-	  min_vars, f_mat);
+  double step_size = .001;
+  int n_ode_rows;
+  n_ode_rows = ((int)(T / step_size)) + 1;
+  double eps_abs = 1.e-8;
+  double eps_rel = 1.e-10;
+  double f_mat[n_ode_rows][P+1];
+  int ode_T;
+  ode_T = (int)(T+.5);
+
+  ode_vals(ode_T, P, D, step_size,
+	   N, init_vals, eps_abs, eps_rel,
+	   min_vars, f_mat);
   
-  //  printf("ode with those vals\n");
-  //  print_float_2d(S, P+1, f_mat);
+
+  /* printf("last time val of fmat is %.3f\n", f_mat[n_ode_rows-1][0]); */
+
+  // Subset f_mat to match time points of data
+  double f_est[S][P+1];
+  // Propagate f_est time values from the data
+  for(int ii=0; ii < S; ii++){
+    f_est[ii][0] = data[ii][0];
+  }
+
+    /*  printf("ode with those times\n"); */
+    /* print_float_2d(S, P+1, f_est); */
+    /*      printf("the data is\n"); */
+    /* print_float_2d(S, P+1, data); */
+
+    /* printf("n_ode_rows is %d\n", n_ode_rows); */
+
+  // Extract the matching time point indices from data and function 
+  int matching_inds[S];
+  find_matching_inds(0, 0,
+		     S, n_ode_rows,
+		     P+1, P+1,
+		     data, f_mat,
+		     1, 1.e-6,
+		     matching_inds);
+  /* printf("matching inds are\n"); */
+  /* print_int_1d(S, matching_inds); */
+  subset_array_d(S, n_ode_rows,
+		 matching_inds, P+1,
+		 f_mat, f_est);
+  
+  
+  /* printf("ode with those vals\n"); */
+  /* print_float_2d(S, P+1, f_est); */
 
   // the actual sum of squares
   double SSE = 0.0;
-  double f_tp=0.;
-  for(int ss=0; ss < S+1; ss++){
+  for(int ss=0; ss < S; ss++){
     for(int pp=1; pp < (P+1); pp++){
-      f_tp=100.0;
-      double t;
-      t = data[ss][0];
-      double eps = 1e-4;
-      //f_tp = extract_ft(t, pp, S, P, f_mat, eps);
-      //printf("f_tp=%.4f\n", f_tp);
-      SSE = SSE + pow(data[ss][pp] - f_mat[ss][pp], 2);
-      //      printf("data=%.2f fxn=%.2f\n", data[ss][pp], f_tp);
-      //   printf("t=%.2f, SSE=%.2f\n", t, SSE);
+      //SSE = SSE + abs(data[ss][pp] - f_est[ss][pp]); // abs val
+       SSE = SSE + pow(data[ss][pp] - f_est[ss][pp], 2);
+      /* printf("ss %d pp %d SSE: %.3f\n", ss, pp, SSE);  */
     }
   }
   //printf("SSE: %.3f\n", SSE);
   return SSE;
 }
 
-/*
-extract the corresponding time point in column p of the function matrix f_mat
-Probably a bit slow
-TODO: speed up
-INPUTS:
-t - time point we are looking at
-p - which column we need.  Typically the second column (so 1)
-S - total number of time steps in f_mat
-P - total number of outputs of the function
-eps - a threshold for equality.  In general should be pretty small
-OUTPUTS:
-proper value of the function in column p and time t
-*/
-double extract_ft(double t, int p, int S, int P,
-		  double f_mat[][P+1], double eps){
-  for (int ss=0; ss < S; ss++){
-    // printf("s=%d, t=%.2f, f=%.2f\n", ss, t, f_mat[ss][p+1]);
-    if( abs_val(f_mat[ss][0] - t) < eps){
-      // printf("returning val\n");
-      //      printf("s=%d, t=%.2f, f=%.2f\n", ss, t, f_mat[ss][p+1]);
-      return f_mat[ss][p];
-    } else{
-      //printf("nothing\n");
-      return 0.;
-    }
-  }
-}
 
 
-
-
-/* print 1d array of doubles */
-void print_float_1d(int N, double a[]){
-  for(int ii=0; ii < N; ii++){
-    printf("%.2f ", a[ii]);
-  }
-  printf("\n");
-}
 
 
 /* Wrapper for the Nelder-Mead optimization for a function with unknown gradient provided by gsl.  The cost function is SSE.

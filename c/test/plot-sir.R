@@ -1,7 +1,7 @@
 ## SKG
 ## Plotting SIR from C
 
-df <- read.table("sir-test-a.txt")
+df <- read.table("test-sir-b.txt")
 colnames(df) <- c("t", "S", "I", "R")
 N <- df$S[1] + df$I[1]
 head(df)

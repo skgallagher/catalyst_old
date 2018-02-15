@@ -19,12 +19,12 @@ TODO:
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_odeiv.h>
-#include "minimize-functions.h"
 #include "sir-functions.h"
+#include "helper-functions.h"
 
 /* SIR struct */
 /* TODO: make generic for any ode */
-struct sir {
+struct si_params {
   double params[100]; // {beta, gamma, ...}
   double N;
 };
@@ -34,23 +34,28 @@ struct sir {
 /* 
 This is a wrapper for the ODE functions.  This will integrate with the optimizer to find best fit of parameters in the ODE. 
 First make function based on parameters
-f(x; p) that returns matrix from steps x[0][0], x[1][0], ..., x[S][0]
-x - S x P+1 array of data where first col is time (which is really what we need)
+f(x; p) that returns matrix from steps x[0][0], x[t+ step_size][0], ..., x[T][0]
 INPUTS:
-p = [param1, param2, ...] (like {step_size, beta, gamma, N}).  Currently this is [beta, gamma, N]
-S = total number of obs
-P = total number of outputs (Ys) to minimize. genrally 1
-f_mat -- output of data
+T - max time
+P - number of differential equations to minimize = number of Ys (e.g. in SIR, 3)
+D - number of disease parameters to MINIMIZE (so no N)
+step_size - for the ODE integrater.  how big should our steps be?
+N - number of agents
+init_vals - array of length P of the initial values at time 0
+eps_abs - absolute error requested 
+eps_rel - relative error requested 
+p = [param1, param2, ...] (like {beta, gamma, N}).  Currently this is [beta, gamma, N]
+f_mat -- output of data double array of dimension (T / step_size + 1) x P+1
 OUTPUTS:
 modified f_mat with function at given values of t for given parameters p
 TODO:  Make this function into smaller pieces
  */
-void ode_wrapper(int S, int P, double x[][P+1],
-		 double p[], double f_mat[][P+1]){
-  int dimension = P;		/* number of differential equations */
-  
-  double eps_abs = 1.e-8;	/* absolute error requested */
-  double eps_rel = 1.e-10;	/* relative error requested */
+void ode_vals(int T, int P, int D, double step_size,
+	      double N, double init_vals[],
+	      double eps_abs, double eps_rel,
+	      double p[], double f_mat[][P+1]){
+  int dimension;
+  dimension = P;
 
   /* define the type of routine for making steps: */
   const gsl_odeiv_step_type *type_ptr = gsl_odeiv_step_rkf45;
@@ -61,24 +66,26 @@ void ode_wrapper(int S, int P, double x[][P+1],
   gsl_odeiv_step *step_ptr = gsl_odeiv_step_alloc (type_ptr, dimension);
   gsl_odeiv_control *control_ptr = gsl_odeiv_control_y_new (eps_abs, eps_rel);
   gsl_odeiv_evolve *evolve_ptr = gsl_odeiv_evolve_alloc(dimension);
-
   gsl_odeiv_system my_system;	/* structure with the rhs function, etc. */
 
-  //printf("current data in ode_wrapper\n");
-  // print_float_2d(S, P+1, x);
   // TODO: make generic
-  struct sir disease_params;
+  struct si_params disease_params;
 
-  // printf("beta %.3f gamma %.3f\n", p[0], p[1]);
-  disease_params.params[0] = p[0]; // beta
-  disease_params.params[1] = p[1]; // gamma
-  double N = 0.;
-  for(int ii=0; ii < P; ii++){ // N is taken from initial states
-    N = N + x[0][ii+1];
+   // printf("beta %.3f gamma %.3f\n", p[0], p[1]);
+  for(int ii=0; ii < D; ii++){
+    disease_params.params[ii] = p[ii];  // put the disease params in the struct
   }
   disease_params.N = N; // N
   double y[P];			/* current solution vector */
+  // Fill y initial values
+  f_mat[0][0] = 0.0;
+  for(int ii=0; ii < P; ii++){
+    y[ii] = init_vals[ii];
+    f_mat[0][ii+1] = y[ii];
+  }
 
+  /* printf("T is %d\n", T); */
+  
   double t, t_next;		/* current and next independent variable */
   double tmin, tmax, delta_t;	/* range of t and step size for output */
 
@@ -91,45 +98,32 @@ void ode_wrapper(int S, int P, double x[][P+1],
   my_system.params = &disease_params;	/* parameters to pass to rhs and jacobian */
 
  
-    
-  for(int ii=0; ii < P; ii++){
-    y[ii] = x[0][ii + 1]; // Initial values taken from data at time 0
-    f_mat[0][ii+1] = x[0][ii+1];
-  }
-
-  // put time steps in f_mat
-  for(int ss=0; ss < S+1; ss++){
-    f_mat[ss][0] = x[ss][0];
-  }
-
-  //  printf("S is %d\n", S);
-  tmin = x[0][0];		/* starting t value */
-  tmax = x[S][0];	        /* final t value */
-  delta_t = .01;
+  tmin = 0.0;		/* starting t value */
+  tmax = (double)T;	        /* final t value */
+  /* printf("tmax is %.3f\n", tmax); */
+  delta_t = step_size;
   t = tmin;             /* initialize t */
   int ss = 1;
-  /* step to tmax from tmin */
-  //   printf("tmax %.5f\n", tmax);
-  for (t_next = tmin + delta_t; t_next <= tmax; t_next += delta_t){
+  for (t_next = tmin + delta_t; t_next <= (tmax+delta_t); t_next += delta_t){
     while (t < t_next){	/* evolve from t to t_next */
 	gsl_odeiv_evolve_apply (evolve_ptr, control_ptr, step_ptr,
 				&my_system, &t, t_next, &h, y);
     }
-    //    printf("t %.3f\n", t);
-    // add to matrix if proper step size
-    if(abs_val(f_mat[ss][0] - t) < .000001){
-      for(int ii=0; ii < (P); ii++){
-	f_mat[ss][ii+1] = y[ii];
-	//	printf("ss %d t %.3f ii %d\n", ss, t, ii);
-      }
-      ss = ss+1;
+    f_mat[ss][0] = t_next;
+    for(int ii=0; ii < (P); ii++){
+      f_mat[ss][ii+1] = y[ii];
     }
+    /* printf("current time is %.3f\n", f_mat[ss][0]); */
+    ss = ss+1;
   }
 
   /* all done; free up the gsl_odeiv stuff */
   gsl_odeiv_evolve_free (evolve_ptr);
   gsl_odeiv_control_free (control_ptr);
   gsl_odeiv_step_free (step_ptr);
+
+  
+  
 }
 
 
@@ -150,7 +144,7 @@ int rhs (double t, const double y[], double f[], void *params_ptr){
 
   
   /* get parameter(s) from params_ptr; here, just a double */
-  struct sir *my_params_pointer = params_ptr;
+  struct si_params *my_params_pointer = params_ptr;
   double beta = my_params_pointer->params[0];
   double gamma = my_params_pointer->params[1];
   double N = my_params_pointer->N;
@@ -177,7 +171,7 @@ int jacobian (double t, const double y[], double *dfdy,
           double dfdt[], void *params_ptr){
   
   /* get parameter(s) from params_ptr; here, just a double */
-  struct sir *my_params_pointer = params_ptr;
+  struct si_params *my_params_pointer = params_ptr;
   double beta = my_params_pointer->params[0];
   double gamma = my_params_pointer->params[1];
   double N = my_params_pointer->N;

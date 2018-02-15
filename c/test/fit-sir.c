@@ -15,6 +15,7 @@ Compilation:
 #include <math.h>
 #include "minimize-functions.h"
 #include "sir-functions.h"
+#include "helper-functions.h"
 
 
 

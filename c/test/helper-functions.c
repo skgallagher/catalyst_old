@@ -73,24 +73,30 @@ void find_matching_inds(int Cx, int Cy,
 			int is_ordered, double eps,
 			int matching_inds[]){
   double el_x, el_y;
-  double abs_diff;
   int jj_start=0;
   if(is_ordered == 1){
     for(int ii=0; ii < Nx; ii++){
       el_x = x[ii][Cx];
+      /* printf("element x is %.3f\n", el_x); */
       for(int jj=jj_start; jj < Ny; jj++){
+	/* printf("jj is %d\n", jj); */
+	/* printf("Ny is %d\n", Ny); */
 	el_y = y[jj][Cy];
+	/* printf("element y is %.3f\n", el_y); */
+	/* printf("x: %.3f y: %.3f\n", el_x, el_y); */
 	if(abs_val(el_x - el_y) < eps){
 	  matching_inds[ii] = jj;
 	  jj_start = jj;
 	  break;
 	} else if(el_y > el_x){
+	  /* printf("y > x"); */
 	  matching_inds[ii] = -1;
 	  jj_start = jj;
 	  break;
 	}
 	matching_inds[ii] = -1;
-	jj_start = jj;
+	/* jj_start = jj; */
+	/* printf("jj_start is %d\n ", jj_start); */
       }
 
     }

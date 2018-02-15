@@ -5,7 +5,7 @@ ugh
 January 30, 2018
 SKG
 Compilation command:
- gcc minimize-test-4.c minimize-functions.c -o minimize-test-4 -lgsl -lgslcblas -lm
+ gcc minimize-test-4.c minimize-functions.c helper-functions.c sir-functions.c -o minimize-test-4 -lgsl -lgslcblas -lm
 
 V4
 This is testing the limits of my C knowledge
@@ -27,6 +27,7 @@ Want to find {b0, b1}
 #include <math.h>
 #include "minimize-functions.h"
 #include "sir-functions.h"
+#include "helper-functions.h"
 
 
 
