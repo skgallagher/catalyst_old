@@ -10,7 +10,7 @@ SKG
 #include <time.h>
 #include <stdlib.h>
 #include <glib.h>
-
+#include "random-draws-functions.h"
 
 
 

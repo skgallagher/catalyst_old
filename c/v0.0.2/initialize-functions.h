@@ -20,13 +20,17 @@ void make_nbr_dict(int N, int E, int env[][E], GHashTable *dict);
 
 void initialize_base_probs(int T, int N, int K,
 			   int P, int D,
+			   int init_state_counts[],
 			   double p[], double step_size,
 			   double eps_abs, double eps_rel,
 			   int agent_status[][N],
 			   char base_probs_fn[],
-			   double base_probs[][K][K],
+			   double base_probs[][K][K]
 			   );
 
-void extract_sir_probs(int T, double N, int K, double sir_vals[][P+1],
+void extract_sir_probs(int T, double N, int K, int P,
+		       double sir_vals[][P+1],
 		       double p[],
 		       double base_probs[][K][K]);
+
+int extract_neighbors(GHashTable* nbr_dict, int inf_ind, int nbr_inds[]);

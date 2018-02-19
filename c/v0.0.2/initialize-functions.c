@@ -12,6 +12,8 @@ SKG
 #include <glib.h>
 #include "random-draws-functions.h"
 #include "helper-functions.h"
+#include "initialize-functions.h"
+#include "sir-functions.h"
 
 
 void initialize_agents(int T, int N, int K,
@@ -105,11 +107,12 @@ void make_nbr_dict(int N, int E, int env[][E], GHashTable *dict){
 
 void initialize_base_probs(int T, int N, int K,
 			   int P, int D,
+			   int init_state_counts[],
 			   double p[], double step_size,
 			   double eps_abs, double eps_rel,
 			   int agent_status[][N],
 			   char base_probs_fn[],
-			   double base_probs[][K][K],
+			   double base_probs[][K][K]
 			   ){
 
   int S = (int)(T / step_size) + 1;
@@ -118,7 +121,7 @@ void initialize_base_probs(int T, int N, int K,
   double init_vals[K];
 
   // Run the ODE
-  void ode_vals(T, P, D, step_size,
+  ode_vals(T, P, D, step_size,
 		1.0 * N, init_vals,
 		eps_abs,  eps_rel,
 		p, f_mat);
@@ -128,10 +131,6 @@ void initialize_base_probs(int T, int N, int K,
   for(int ii=0; ii < (T+1); ii++){
     f_est[ii][0] = 1.0 * ii;
   }
-
-  // Get the ODE values at each time step
-  extract_init_vals(K, agent_status,
-		    init_vals);
 
   // Subset ODE to whole time points
   int matching_inds[T+1];
@@ -152,7 +151,8 @@ void initialize_base_probs(int T, int N, int K,
   // Currently hardcoded for SIR
   // Prob of S-> I = beta * I / N
   // Prob of I -> R = gamma
-  extract_sir_probs(T, N, K, f_est,
+  extract_sir_probs(T, N, K, P,
+		    f_est,
 		    p,
 		    base_probs);
 }
@@ -160,7 +160,8 @@ void initialize_base_probs(int T, int N, int K,
 
 
 
-void extract_sir_probs(int T, double N, int K, double sir_vals[][P+1],
+void extract_sir_probs(int T, double N, int K, int P,
+		       double sir_vals[][P+1],
 		       double p[],
 		       double base_probs[][K][K]){
   for(int tt=0; tt < T; tt++){
@@ -182,3 +183,25 @@ void extract_sir_probs(int T, double N, int K, double sir_vals[][P+1],
   
 }
 
+/*
+Extract the neighbors of the agent into an integer array.  also count the number
+INPUTS:
+nbr_dict dictionary of neighbors where the key is a GInt of the current agent index and the value is a g_slist of neighbor indices
+inf_ind -- integer index of current agent we are looking for neighbors of
+nbr_inds -- integer array of indices of neighbors from hashtable
+OUTPUT: modified nbr_inds and n_nbrs -- the total number of neighbors for this agent
+ */
+int extract_neighbors(GHashTable* nbr_dict, int inf_ind, int nbr_inds[]){
+  gint n_nbrs;
+  gpointer value;
+  gint* my_ind = g_new(gint, 1);
+  *my_ind = inf_ind;
+  printf("Agent index is %d\n", inf_ind);
+  value = g_hash_table_lookup(nbr_dict, GINT_TO_POINTER(my_ind));
+  n_nbrs = g_slist_length(value);
+  printf("The number of neighbors is %d\n", n_nbrs);
+  for(int ii=0; ii < n_nbrs; ii++){
+    nbr_inds[ii] = *(int*)g_slist_nth(value, ii)->data;
+  }
+  return n_nbrs;
+}
