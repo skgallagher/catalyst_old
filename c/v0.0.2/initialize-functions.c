@@ -56,7 +56,7 @@ void initialize_envs(int E, int N, int max_env,
     int lower_bd = 0;
     int upper_bd = init_env_counts[ee][0];
     for (int kk=0; kk < max_env; kk++){
-      printf("upper_bd %d\n", upper_bd);
+      //     printf("upper_bd %d\n", upper_bd);
       if( upper_bd > N){
 	break;
       }
@@ -77,8 +77,6 @@ void initialize_envs(int E, int N, int max_env,
 Initialize dictionary of neighbors in dict.  Here dict is GHashtable with integer keys corresponding to the agent index of reference and corresponding values that are a integer GArray of indices of neighbors.  N is the number of agents
  */ 
 void make_nbr_dict(int N, int E, int env[][E], GHashTable *dict){
-
-
    
   for(int ii = 0; ii < N; ii++){
 
@@ -105,6 +103,10 @@ void make_nbr_dict(int N, int E, int env[][E], GHashTable *dict){
 }
 
 
+/*
+INPUTS:
+base_probs  - 3d array of dimension TxKxK. entry ijk is the probability of an agent in compartment j moving to compartment k from time i to i+1.
+ */
 void initialize_base_probs(int T, int N, int K,
 			   int P, int D,
 			   int init_state_counts[],
@@ -119,12 +121,17 @@ void initialize_base_probs(int T, int N, int K,
   double f_mat[S][P+1]; // SIR values at from 0 to S * step_size
   double f_est[T+1][P+1]; // SIR values at time 0, 1, ..., T
   double init_vals[K];
+  for(int ii=0; ii < K; ii++){
+    init_vals[ii] = 1.0 * init_state_counts[ii];
+  }
 
   // Run the ODE
   ode_vals(T, P, D, step_size,
 		1.0 * N, init_vals,
 		eps_abs,  eps_rel,
 		p, f_mat);
+
+  // print_float_2d(S, P+1, f_mat);
 
 
   // Fill in time values in f_est
@@ -151,7 +158,7 @@ void initialize_base_probs(int T, int N, int K,
   // Currently hardcoded for SIR
   // Prob of S-> I = beta * I / N
   // Prob of I -> R = gamma
-  extract_sir_probs(T, N, K, P,
+  extract_sir_probs(T, 1.0 * N, K, P,
 		    f_est,
 		    p,
 		    base_probs);
@@ -165,18 +172,20 @@ void extract_sir_probs(int T, double N, int K, int P,
 		       double p[],
 		       double base_probs[][K][K]){
   for(int tt=0; tt < T; tt++){
+    //printf("tt %d I %.2f N %.2f\n", tt, sir_vals[tt][2], N);
     double beta = p[0];
     double gamma = p[1];
-    base_probs[tt][0][1] = beta * sir_vals[tt][1] *
+    
+    base_probs[tt][0][1] = beta *
       sir_vals[tt][2] / N; // S to I
-    base_probs[tt][0][1] = 0.0; // I to R
-    base_probs[tt][0][0] = 1.0 - base_probs[tt][0][1]; // S to R
+    base_probs[tt][0][2] = 0.0; // S to R
+    base_probs[tt][0][0] = 1.0 - base_probs[tt][0][1]; // S to S
     base_probs[tt][1][0] = 0.0; // I to S
     base_probs[tt][1][1] = 1.0 - gamma; // I to I
-    base_probs[tt][1][1] = gamma; // I to R
+    base_probs[tt][1][2] = gamma; // I to R
     base_probs[tt][2][0] = 0.0; // R to S
-    base_probs[tt][2][0] = 0.0; // R to I
-    base_probs[tt][2][0] = 1.0; // R to R
+    base_probs[tt][2][1] = 0.0; // R to I
+    base_probs[tt][2][2] = 1.0; // R to R
     
       
   }
