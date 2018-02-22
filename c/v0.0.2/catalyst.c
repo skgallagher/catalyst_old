@@ -7,7 +7,7 @@ SKG
 Compilation command:
 
 
-gcc `pkg-config --cflags --libs glib-2.0`   catalyst.c random-draws-functions.c helper-functions.c initialize-functions.c sir-functions.c minimize-functions.c read-write-functions.c -o catalyst -lgsl -lgslcblas -lm
+gcc `pkg-config --cflags --libs glib-2.0`   catalyst.c random-draws-functions.c helper-functions.c initialize-functions.c sir-functions.c minimize-functions.c read-write-functions.c update-functions.c -o catalyst -lgsl -lgslcblas -lm
  */
 
 #include <stdio.h>
@@ -23,6 +23,7 @@ gcc `pkg-config --cflags --libs glib-2.0`   catalyst.c random-draws-functions.c 
 #include "sir-functions.h"
 #include "minimize-functions.h"
 #include "read-write-functions.h"
+#include "update-functions.h"
 
 int main(){
 
@@ -89,6 +90,109 @@ int main(){
   			base_probs);
 
   char base_probs_fn[] = "base_probs.csv";
-  write_base_probs(T, K, base_probs, base_probs_fn);
+  // write_base_probs(T, K, base_probs, base_probs_fn);
+
+  /*
+  // Run the simulation
+  */
+  
+  double agent_probs[N][K]; // prob of transitioning from current state to state k
+  get_agent_probs(T, N, K, 0,
+		  agent_status,
+		  base_probs,
+		  agent_probs);
+
+  printf("initial agent probs of transition conditioned on current state\n");
+  print_2d_array(N, K, agent_probs);
+
+
+  // Find the initial infected agents
+
+  n_inf_inds = find_infected_agents(N, 0, inf_state_cats,
+		       n_inf_states, agent_status,
+		       init_inf_inds);
+  print_array(init_inf_inds, n_inf_inds);
+
+
+  // Actually loop over agents and infect them
+
+  double infection_probs[K][K][K];
+  // probs of infection
+  infection_probs[1][0][1] = 1.0; // chance of infected infecting
+  // susceptible to being infected is 1
+
+  int inf_ind;
+  int sus_ind;
+  int n_nbrs; // # of neighbors of current infected agent
+  int nbr_inds[N]; // indices of neighbors initialization
+  int env_inds[E];
+
+  int do_am = 0; // if 1, we do the AM specific calculations
+  // Else , use the base probabilities to udpate
+
+  if(do_am == 1){
+    for(int t=0; t < T ; t++){
+      for(int ii=0; ii < n_inf_inds; ii++){
+	// Loop over infectious
+	// Loop over neigbhors
+	// Check if neighbor is susceptible
+	// Check if susceptible hasn't already been infected, e.g.
+	// agent_probs isn't 1 in an infectious category
+	// infect agent (e.g. update agent_probs)
+
+
+	inf_ind = init_inf_inds[ii];
+	printf("\nExtracting neighbors for agent %d\n", inf_ind);
+	n_nbrs = extract_neighbors(nbr_dict, inf_ind, nbr_inds);
+	printf("The neighbors are\n");
+	print_array(nbr_inds, n_nbrs);
+    
+	for(int jj=0; jj < n_nbrs; jj++){
+	  sus_ind = nbr_inds[jj];
+	  printf("the neighbor index is %d\n", sus_ind);
+	  // check if agent is currently in susceptible state
+	  if (in_array(agent_status[t][sus_ind], 
+		       sus_state_cats, n_sus_states) == 1){
+	    printf("neighbor %d is susceptible\n", sus_ind);
+	    // check if agent is not already infected by another agent
+	    if(already_inf(sus_ind, K, n_inf_states,
+			   agent_probs, inf_state_cats) != 1){
+	      printf("neighbor %d is not already infected\n", sus_ind);
+	    
+	      infect_agent(inf_ind, sus_ind,
+			   t, 
+			   N, K,
+			   agent_status,
+			   E, env,
+			   env_inds,
+			   inf_state_cats,
+			   sus_state_cats,
+			   infection_probs,
+			   agent_probs);
+	    }
+	  }
+	}
+      }
+    }
+    printf("after interacting at time step %d, agent probs of transition conditioned on current state\n", t);
+    print_2d_array(N, K, agent_probs);
+    
+    // Do draws to see how agents update based on their probs
+    printf("Updating agents!\n");
+    update_agents(t, N, K,  agent_probs, agent_status);
+    // Update the infectious indices
+    n_inf_inds = find_infected_agents(N, t, inf_state_cats,
+				      n_inf_states, agent_status,
+				      init_inf_inds);
+    // Update agent probs
+    get_agent_probs(T, N, K, t+1,
+		    agent_status,
+		    base_probs,
+		    agent_probs);
+
+
+  }
+  char fn[] = "agents-out.csv";
+  write_agents(fn, N, T+1, agent_status);
 
 }

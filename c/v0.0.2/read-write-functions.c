@@ -45,3 +45,25 @@ void write_base_probs(int T, int K,
    fclose(f);
 
 }
+
+
+/*
+Write out agents to a csv
+Rows are time steps
+Columns are agents
+ */
+void write_agents(char fn[], int N, int T,
+		  int agent_status[][N]){
+  printf("Writing out agents to %s\n", fn );
+
+  FILE *f = fopen(fn, "w");
+  for (int tt=0; tt < T; tt++){
+    for (int ii=0; ii < N; ii++){
+      fprintf(f, "%d,", agent_status[tt][ii]);
+      fflush(stdout);
+    }
+    fprintf(f, "\n");
+    fflush(stdout);
+  }
+  fclose(f);
+}
