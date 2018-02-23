@@ -46,10 +46,10 @@ OUTPUTS: 1 if agent is already infected and zero otherwise
 int already_inf(int sus_ind, int K, int n_inf_states,
 		double agent_probs[][K], int inf_state_cats[]){
   for(int kk=0; kk < K; kk++){
-      // If agent both has prob 1 of transitioning and
-      // that 1.0 is to an infectious state
-
-    print_array(inf_state_cats, n_inf_states);
+    // If agent both has prob 1 of transitioning and
+    // that 1.0 is to an infectious state
+    
+    //    print_array(inf_state_cats, n_inf_states);
     if((agent_probs[sus_ind][kk] == 1.0) &&
        (in_array(kk, inf_state_cats, n_inf_states) == 1)){
       //printf("category is %d\n", kk);
@@ -85,30 +85,6 @@ void update_agents(int t, int N, int K,
 }
 
 
-
-
-/*
-Extract the neighbors of the agent into an integer array.  also count the number
-INPUTS:
-nbr_dict dictionary of neighbors where the key is a GInt of the current agent index and the value is a g_slist of neighbor indices
-inf_ind -- integer index of current agent we are looking for neighbors of
-nbr_inds -- integer array of indices of neighbors from hashtable
-OUTPUT: modified nbr_inds and n_nbrs -- the total number of neighbors for this agent
- */
-int extract_neighbors(GHashTable* nbr_dict, int inf_ind, int nbr_inds[]){
-  gint n_nbrs;
-  gpointer value;
-  gint* my_ind = g_new(gint, 1);
-  *my_ind = inf_ind;
-  //printf("Agent index is %d\n", inf_ind);
-  value = g_hash_table_lookup(nbr_dict, GINT_TO_POINTER(my_ind));
-  n_nbrs = g_slist_length(value);
-  //printf("The number of neighbors is %d\n", n_nbrs);
-  for(int ii=0; ii < n_nbrs; ii++){
-    nbr_inds[ii] = *(int*)g_slist_nth(value, ii)->data;
-  }
-  return n_nbrs;
-}
 
 
 

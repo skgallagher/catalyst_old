@@ -16,7 +16,6 @@ void update_agents(int t, int N, int K,
 		   double agent_probs[][K],
 		   int agent_status[][N]);
 
-int extract_neighbors(GHashTable* nbr_dict, int inf_ind, int nbr_inds[]);
 
 int find_infected_agents(int N, int t, int infection_state_cats[],
 			 int n_inf_states,

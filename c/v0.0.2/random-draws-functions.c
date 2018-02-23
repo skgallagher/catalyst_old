@@ -43,7 +43,7 @@ int draw_multinom(double probs[], int K){
 
 
 double double_rand(double min, double max ){
-    double scale = rand() / (double) RAND_MAX; /* [0, 1.0] */
-    return min + scale * ( max - min );      /* [min, max] */
+  double scale = rand() / (double) RAND_MAX; /* [0, 1.0] */
+  return min + scale * ( max - min );      /* [min, max] */
 }
 
