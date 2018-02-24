@@ -163,3 +163,36 @@ void print(gpointer key, gpointer value, gpointer data) {
   printf("The last item is '%d'\n",
 	 *(gint*)g_slist_last(value)->data); 
 }
+
+
+/*
+Count the number of agents in each compartment at each time step, for each run
+INPUTS:
+ll - current run
+T - total number of time steps.  
+N - total number of agents
+K - total number of compartments labeled 0, 1, ..., K-1
+L - total number of runs 
+agent_status - TxN array where entry ij is the the jth's agent's status at time i
+compt_counts - LxTxK array where entry ijk is the number of agents in compartment k at time j and run i
+OUTPUTS: updated compt_counts for run ll
+ */
+void count_compts(int ll,
+		  int T, int N, int K, int L,
+		  int agent_status[][N],
+		  int compt_counts[][T][K]){
+  
+  int counter;
+
+  for(int kk=0; kk < K; kk++){
+    for(int tt=0; tt < T; tt++){
+      counter = 0;
+      for(int ii=0; ii < N; ii++){
+	if(agent_status[tt][ii] = kk){
+	  counter++
+	}
+      }
+      compt_counts[ll][tt][kk] = counter;
+    }
+  }
+}
