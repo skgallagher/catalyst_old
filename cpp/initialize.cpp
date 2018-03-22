@@ -12,20 +12,21 @@ Compilation command:
  */
 
 
+#include "initialize.hpp"
 
 /*
 Set up an array of initial agent states
 INPUTS:
-T - total number of time steps from 0, 1, ..., T-1
 N - total number of agents
+T - total number of time steps from 0, 1, ..., T-1
 K - total number of compartments
 agent_status - T x N array where entry tn is agent n's status at time t
 init_state_counts - 1d array of length K of the number of agents in each state at time 0.  That is entry k is the number of agents in state k at time 0.  Should add to N.
 OUTPUTS:
 agent_status array
  */
-initialize_agents(int T, int N, int K,
-		  int agent_status[][N],
+void initialize_agents(int N, int T, int K,
+		  int agent_status[][1000],
 		  int init_state_counts[]){
   // Initialize agents at time 0
   // so the first m_0 are in state 0, the next
@@ -36,13 +37,14 @@ initialize_agents(int T, int N, int K,
   int upper_bd = init_state_counts[0];
   for (int kk=0; kk < K; kk++){
     for (int ii=lower_bd; ii < upper_bd; ii++){
-      agent_status[0][ii] = kk;
+      agent_status[ii][0] = kk;
     }
     if (kk < K-1){
       lower_bd = upper_bd;
       upper_bd = upper_bd + init_state_counts[kk+1];
     }
   }
+
 
 
 
@@ -60,7 +62,7 @@ initialize_agents(int T, int N, int K,
   @return a modified env variable, a N x E array.
  */
 void initialize_envs(int E, int N, int max_env,
-		     int env[][E],
+		     int env[][100],
 		     int init_env_counts[][100]){
 
   for(int ee=0; ee < E; ee++){
@@ -94,7 +96,7 @@ map - the dictionary of neighbors we are passing
 OUTPUTS:
 updated and modified map where the keys are the indices of the neighbors and the values are a 1d array/vector(?) of the neighbors
  */ 
-void init_nbr_dict(int N, int E, int env[][E],
+void init_nbr_dict(int N, int E, int env[][100],
 		   std::map<int,int*> &map){
    
   for(int ii = 0; ii < N; ii++){ // Loop over agents
