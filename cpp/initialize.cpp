@@ -55,13 +55,13 @@ void initialize_agents(int N, int T, int K,
 /*
   Initialize environments for the activities.  This is a N x E array where entry
   n,e is the nth agent's e^th environment assignment.  All 0s constitute a NULL assignment.
-  @arg E number of environment types (e.g. schools + workplaces -> E =2)
   @arg N number of agents
+  @arg E number of environment types (e.g. schools + workplaces -> E =2)
   @arg max_env is the max number of different  categories
   @arg init_env_counts is a 2D E x max_env  array where entry j, i means that environment j has init_env_counts[i,j] agents with assignment i.
   @return a modified env variable, a N x E array.
  */
-void initialize_envs(int E, int N, int max_env,
+void initialize_envs(int N, int E, int max_env,
 		     int env[][100],
 		     int init_env_counts[][100]){
 

@@ -40,21 +40,23 @@ int main(){
   		    agent_status,
   		    init_state_counts);
 
+  std::cout << "agents \n";
   print_agents(N, T, agent_status);
 
-  // // environments
-  // int E = 3;
-  // int max_env = 5;
-  // int env[N][E];
-  // // magic number 100.  If there are more than 100^2 total ECs this will break
-  // int init_env_counts[100][100]  = {{20, 10, 10, 0, 60},
-  // 				    {0, 25, 25, 50, 0},
-  // 				    {100, 0, 0, 0, 0}};
+  int E = 3;
+  int max_env = 5; // the max k
+  int env[N][100];
+  // magic number 100.  If there are more than 100^2 total ECs this will break
+  int init_env_counts[10][100]  = {{2, 1, 1, 0, 6},
+  				    {0, 3, 2, 5, 0},
+  				    {10, 0, 0, 0, 0}};
   
   
-  // //initialize_envs(E, N, max_env,
-  // //		  env, init_env_counts);
+  initialize_envs(N, E, max_env,
+  		  env, init_env_counts);
 
+  std::cout << "envs \n";
+  print_envs(N, E, env);
 
 
 
