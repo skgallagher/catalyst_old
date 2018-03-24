@@ -13,3 +13,6 @@ void initialize_agents(int N, int T, int K,
 void initialize_envs(int N, int E, int max_env,
 		     int env[][100],
 		     int init_env_counts[][100]);
+
+std::map<int,int*> init_nbr_dict(int N, int E, int env[][100],
+		   std::map<int,int*> map);

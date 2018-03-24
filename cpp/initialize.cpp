@@ -96,28 +96,34 @@ map - the dictionary of neighbors we are passing
 OUTPUTS:
 updated and modified map where the keys are the indices of the neighbors and the values are a 1d array/vector(?) of the neighbors
  */ 
-void init_nbr_dict(int N, int E, int env[][100],
-		   std::map<int,int*> &map){
-   
+std::map<int,int*> init_nbr_dict(int N, int E, int env[][100],
+		   std::map<int,int*> map){
+
+  std::cout << "in function\n";
   for(int ii = 0; ii < N; ii++){ // Loop over agents
-
+    int num_nbrs = 0;
+    int nbrs[N];
     for(int jj=0; jj < N; jj++){ // Loop over possible neighbors
-      int num_nbrs = 0;
-
       for(int ee=0; ee < E; ee++){ // Loop over environments
 	int current_env = env[ii][ee];
 	// NULL assignments (env =0) are NOT neighbors)
 	// NEIGHBORS should not include self
-	if( current_env > 0 & ii !=jj & 
+	if( current_env > 0 & ii !=jj &
 	    env[jj][ee] == current_env){
 	  // Add neighbors to map and break since we don't like repeat neighbors
-	  map[ii][num_nbrs] = jj;
+	  nbrs[num_nbrs] = jj;
 	  num_nbrs++;
 	  break;
 	}
       }
     }
+    if(num_nbrs > 0){
+      map[ii] = nbrs;
+      cout << map[ii][0] << '\n';
+    }
   }
+
+  return map;
 }
 
 

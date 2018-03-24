@@ -59,9 +59,20 @@ int main(){
   print_envs(N, E, env);
 
 
+  
 
-  // std::map<int,int*> nbr_dict;
-  // // make_nbr_dict(N, E, env, nbr_dict);
+  std::map<int,int*> nbr_dict; 
+  nbr_dict = init_nbr_dict(N, E, env, nbr_dict);
+
+  for(int ii=0; ii < N; ii++){
+    for(int jj=0; jj < N; jj++){
+      cout << nbr_dict[ii][jj] << ' ';
+    }
+    cout << '\n';
+  }
+
+  std::cout << "neighbor dict \n";
+  print_nbrs(N, nbr_dict);
 
 
 
