@@ -8,13 +8,24 @@ g++ test-initialize.cpp ../print.cpp ../initialize.cpp -o test-inits
  */
 
 #include <iostream>
-#include <map>
+#include <boost/graph/graph_traits.hpp>
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/adjacency_iterator.hpp>
 #include "../initialize.hpp"
 #include "../print.hpp"
 using namespace std;
 
+typedef boost::property<boost::vertex_property_tag, double> VertexProperty;
+typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS, VertexProperty> Graph;
+typedef boost::property_map<Graph, boost::vertex_index_t>::type IndexMap;
+typedef boost::graph_traits < Graph >::adjacency_iterator adjacency_iterator;
+    
+
+ 
 
 int main(){
+
+
 
   int N = 10; // number of agents
   int T = 10; // number of time steps
@@ -37,8 +48,8 @@ int main(){
 
 
   initialize_agents(N, T, K,
-  		    agent_status,
-  		    init_state_counts);
+		    agent_status,
+		    init_state_counts);
 
   std::cout << "agents \n";
   print_agents(N, T, agent_status);
@@ -48,12 +59,12 @@ int main(){
   int env[N][100];
   // magic number 100.  If there are more than 100^2 total ECs this will break
   int init_env_counts[10][100]  = {{2, 1, 1, 0, 6},
-  				    {0, 3, 2, 5, 0},
-  				    {10, 0, 0, 0, 0}};
+				   {0, 3, 2, 5, 0},
+				   {10, 0, 0, 0, 0}};
   
   
   initialize_envs(N, E, max_env,
-  		  env, init_env_counts);
+		  env, init_env_counts);
 
   std::cout << "envs \n";
   print_envs(N, E, env);
@@ -61,18 +72,16 @@ int main(){
 
   
 
-  std::map<int,int*> nbr_dict; 
-  nbr_dict = init_nbr_dict(N, E, env, nbr_dict);
+  Graph g(N);
+  std::cout << "neighbor graph \n";
+  
+  g = initialize_nbr_graph(N, E, env);
 
-  for(int ii=0; ii < N; ii++){
-    for(int jj=0; jj < N; jj++){
-      cout << nbr_dict[ii][jj] << ' ';
-    }
-    cout << '\n';
-  }
+  print_graph_nbrs(g, N);
 
-  std::cout << "neighbor dict \n";
-  print_nbrs(N, nbr_dict);
+
+  
+
 
 
 

@@ -87,22 +87,22 @@ void initialize_envs(int N, int E, int max_env,
 
 
 /*
-Initialize dictionary of neighbors in dict. 
+Return graph (adjacency list) of neigbhors
 INPUTS:
 N - number of total agents
 E - number of total environments
 env - N x E array where entry ne is agent n's value for env e.  0 is a NULL assignment
-map - the dictionary of neighbors we are passing
 OUTPUTS:
-updated and modified map where the keys are the indices of the neighbors and the values are a 1d array/vector(?) of the neighbors
- */ 
-std::map<int,int*> init_nbr_dict(int N, int E, int env[][100],
-		   std::map<int,int*> map){
+Graph object from boost library where edges represent being neighbors
+ */
 
-  std::cout << "in function\n";
-  for(int ii = 0; ii < N; ii++){ // Loop over agents
-    int num_nbrs = 0;
-    int nbrs[N];
+Graph initialize_nbr_graph(int N, int E, int env[][100]){
+  Graph g(N);
+  // For every agent
+  // - Find neighbor of agent
+  // - Add them to graph
+  for(int ii=0; ii < N; ii++){
+
     for(int jj=0; jj < N; jj++){ // Loop over possible neighbors
       for(int ee=0; ee < E; ee++){ // Loop over environments
 	int current_env = env[ii][ee];
@@ -110,20 +110,13 @@ std::map<int,int*> init_nbr_dict(int N, int E, int env[][100],
 	// NEIGHBORS should not include self
 	if( current_env > 0 & ii !=jj &
 	    env[jj][ee] == current_env){
-	  // Add neighbors to map and break since we don't like repeat neighbors
-	  nbrs[num_nbrs] = jj;
-	  num_nbrs++;
+	  // Add neighbors to graph and break since we don't like repeat neighbors
+	  boost::add_edge(ii, jj, g);
 	  break;
 	}
       }
     }
-    if(num_nbrs > 0){
-      map[ii] = nbrs;
-      cout << map[ii][0] << '\n';
-    }
+
   }
-
-  return map;
+  return g;
 }
-
-
