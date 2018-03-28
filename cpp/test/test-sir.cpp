@@ -1,6 +1,5 @@
 #include <iostream>
 #include <boost/array.hpp>
-
 #include <boost/numeric/odeint.hpp>
 
 using namespace std;
@@ -8,7 +7,7 @@ using namespace boost::numeric::odeint;
 
 
 
-typedef boost::array< double , 3 > state_type;
+typedef boost::array<double, 3> state_type;
 
 
 
@@ -24,6 +23,20 @@ public:
     dxdt[1] = -1.0 * dxdt[0] - dxdt[2];
   }
 
+};
+
+struct sir_vals{
+    std::vector< state_type >& m_states;
+    std::vector< double >& m_times;
+
+    sir_vals( std::vector< state_type > &states , std::vector< double > &times )
+    : m_states( states ) , m_times( times ) { }
+
+    void operator()( const state_type &x , double t )
+    {
+        m_states.push_back( x );
+        m_times.push_back( t );
+    }
 };
 
 
@@ -42,5 +55,21 @@ int main(int argc, char **argv)
     params[2] = 1000.0;
     sir sys(params);
     
-    integrate_const( stepper, sys , x , 0.0 , 100.0 , 1.0, write_sir);
+    //integrate_const(stepper, sys , x , 0.0 , 100.0 , 1.0, write_sir);
+
+    // Storing results in a container
+    vector<state_type> x_vec;
+    vector<double> times;
+
+    integrate_const(stepper,
+		    sys, x, 0.0 , 100.0 , 1.0 ,
+		    sir_vals(x_vec, times) );
+
+    int steps = 100 / 1 + 1;
+
+    /* output */
+    for( size_t i=0; i < steps; i++ )
+      {
+	cout << times[i] << '\t' << x_vec[i][0] << '\t' << x_vec[i][1] << '\n';
+      }
 }
