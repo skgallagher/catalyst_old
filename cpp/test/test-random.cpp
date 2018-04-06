@@ -8,9 +8,6 @@ March 28, 2018
 #include <iostream>
 #include <cstdlib>
 #include <sys/time.h>
-
-
-#include <random>
 using namespace std;
 
 double double_rand(double min, double max );

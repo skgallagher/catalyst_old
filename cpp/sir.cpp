@@ -18,12 +18,28 @@ T - max amount of time
 step_size - 1 is the step size
 OUTPUTS:
 a filled cm_vals matrix of size (T+1) x (# state + 1) (col 0 is time, 1 is state 1, 2 is 2, etc.)
+
  */
-state_type run_sir(sir sys, state_type init_vals,
+int run_sir(sir sys, state_type init_vals,
 		   runge_kutta4<state_type> stepper,
 		   vector<state_type> cm_vals,
-		   vector<double> times,
-		   double T,
-		   double step_size){
+		   vector<double> times){
 
+  integrate_const(stepper,
+		  sys, init_vals, 0.0 , 100.0 , 1.0,
+		  sir_vals(cm_vals, times) );
+
+  
+  int steps = 100 / 1 + 1;
+
+
+  /* output */
+  for( size_t i=0; i < steps; i++ )
+    {
+      cout << times[i] << '\t' << cm_vals[i][0] << '\t' << cm_vals[i][1] << '\n';
+    }
+
+
+  return 0;
+  
 }

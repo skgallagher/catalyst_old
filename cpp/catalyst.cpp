@@ -17,9 +17,15 @@ g++ catalyst.cpp initialize.cpp print.cpp random.cpp sir.cpp -o catalyst
 #include "print.hpp"
 #include "random.hpp"
 #include "sir.hpp"
+#include <boost/array.hpp>
+#include <boost/numeric/odeint.hpp>
+#include <boost/graph/graph_traits.hpp>
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/adjacency_iterator.hpp>
 
 
 using namespace std;
+using namespace boost::numeric::odeint;
 
 int main(){
 
@@ -47,7 +53,7 @@ int main(){
   int n_inf_states = 1;
   int n_sus_states = 1;
   double p[] = {.1, .03}; // {beta, gamma}
-  double step_size = .001;
+  double step_size = 1.0;
   double eps_abs = 1.e-6;
   double eps_rel = 1.e-6;
   int E = 3; // Number of environments
@@ -83,7 +89,31 @@ int main(){
   g = initialize_nbr_graph(N, E, env);
   print_graph_nbrs(g, N);
 
+  // Setting up the SIR
+  // TODO: match up with above params
+  state_type x = { 950.0 , 50.0 , 0.0 }; // initial conditions
+  runge_kutta4< state_type > stepper;
+  std::array<double,3> params;
+  params[0] = .1;
+  params[1] = .03;
+  params[2] = 1000.0;
+  sir sys(params);
+
+    
+  //integrate_const(stepper, sys , x , 0.0 , 100.0 , 1.0, write_sir);
+
+  // Storing results in a container
+  vector<state_type> cm_vals;
+  vector<double> times;
+  double S = 1.0*T;
   
+
+  cm_vals = run_sir(sys, x,
+		   stepper,
+		    cm_vals,
+		    times);
+
+  print_cm_vals(T, K, cm_vals, step_size);
 
 
   // // Initialize base probabilities of transition

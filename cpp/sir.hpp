@@ -16,7 +16,7 @@ class sir {
 public:
   sir( std::array<double,3> params ) : m_params(params) { }
 
-  void operator() ( const state_type &x, state_type &dxdt, const double /* t */){
+  void operator() (state_type &x, state_type &dxdt, double /* t */){
     dxdt[0] = -1.0 * m_params[0] * x[0] * x[1] / m_params[2];
     dxdt[2] = m_params[1] * x[1];
     dxdt[1] = -1.0 * dxdt[0] - dxdt[2];
@@ -37,3 +37,8 @@ struct sir_vals{
         m_times.push_back( t );
     }
 };
+
+int run_sir(sir sys, state_type init_vals,
+	    runge_kutta4<state_type> stepper,
+	    vector<state_type> cm_vals,
+	    vector<double> times);

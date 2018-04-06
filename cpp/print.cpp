@@ -10,6 +10,7 @@ Compilation command:
 #include "print.hpp"
 
 
+
 void print_agents(int N, int T,
 		  int agent_status[][1000]){
 
@@ -49,4 +50,28 @@ void print_graph_nbrs(Graph g, int N){
     std::cout << '\n';
   }
   
+}
+
+
+/*
+Print CM vals
+INPUTS: 
+T - total amount of time
+K - number of state 
+cm_vals - (T / step_size + 1) x (K+1) matrix where col 0 is time, 1 is state 1, 2 is state 2, etc.
+step_size - time step size
+ */
+void print_cm_vals(int T, int K, vector<state_type> cm_vals,
+		   double step_size){
+  int n_steps;
+  n_steps = (int) (T / step_size + 1);
+  for( int ii=0; ii< n_steps; ii++ ){
+    std::cout << step_size * ii << ' ';
+    for(int kk=0 kk < K; kk++){
+      std::cout << cm_vals[ii][kk] << ' ';
+    }
+    std::cout << '\n';
+  }
+   
+
 }
