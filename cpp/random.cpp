@@ -1,41 +1,22 @@
 /*
-Testing random draws with boost,bernoulli, binomial, and multinomial
+Random numbers and fun times
 
+April 8, 2018
 SKG
-March 28, 2018
- */
 
-#include <iostream>
+Compilation command:
+
+SET THE SEED ONCE IN MAIN
+
 #include <cstdlib>
 #include <sys/time.h>
-
-
-#include <random>
-using namespace std;
-
-double double_rand(double min, double max );
-int draw_multinom(double probs[], int K);
-
-
-
-
-
-int main(){
-
-  struct timeval t1;
+ struct timeval t1;
   gettimeofday(&t1, NULL);
   srand(t1.tv_usec * t1.tv_sec);
-  double probs[2] = {.5, .5};
-  int K=2;
-  int draw;
-  for (int i = 0; i < 30; ++i)
-    {
-      draw = draw_multinom(probs, K);
-      std::cout << draw << "\n";
-    }
-  std::cout << '\n';
-  return 0;
-}
+ */
+
+
+#include "random.hpp"
 
 
 /* Return an integer corresponding to the drawn multinomial
