@@ -57,7 +57,7 @@ int main(){
   double eps_abs = 1.e-6;
   double eps_rel = 1.e-6;
   int E = 3; // Number of environments
-  int max_env = 5; // the max k
+  int max_env = 5; // the max types of environment for each category
   int env[N][100];
   // magic number 100.  If there are more than 100^2 total ECs this will break
   int init_env_counts[10][100]  = {{2, 1, 1, 0, 6},
@@ -75,7 +75,7 @@ int main(){
   print_agents(N, T, agent_status);
 
   // Initialize environments
-  initialize_envs(E, N, max_env,
+  initialize_envs(N, E, max_env,
 		  env, init_env_counts);
   std::cout << "envs \n";
   print_envs(N, E, env);
@@ -110,6 +110,8 @@ int main(){
 
   cm_vals = run_sir(sys, x,
 		   stepper,
+		    step_size,
+		    S,
 		    cm_vals,
 		    times);
 
@@ -117,7 +119,12 @@ int main(){
 
 
   // // Initialize base probabilities of transition
-  // initialize_base_probs();
+  double base_probs[T][100][100];
+  initialize_base_probs(T, K, params,
+			cm_vals,
+			base_probs);
+
+  print_base_probs(T, K, base_probs);
 
   // for(int t=0; t < (T-1); t++){
   //   if(do_am == 1){

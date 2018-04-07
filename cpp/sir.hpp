@@ -1,3 +1,7 @@
+#ifndef SIR_H
+#define SIR_H
+
+
 #include <iostream>
 #include <boost/array.hpp>
 #include <boost/numeric/odeint.hpp>
@@ -38,7 +42,12 @@ struct sir_vals{
     }
 };
 
-int run_sir(sir sys, state_type init_vals,
-	    runge_kutta4<state_type> stepper,
-	    vector<state_type> cm_vals,
-	    vector<double> times);
+vector<state_type> run_sir(sir sys, state_type init_vals,
+		   runge_kutta4<state_type> stepper,
+		   double step_size,
+		   double T,
+		   vector<state_type> cm_vals,
+		   vector<double> times);
+
+
+#endif

@@ -1,5 +1,10 @@
 #include "../sir.hpp"
 
+/*
+COMPILATION
+g++ test-sir-2.cpp ../sir.cpp -o sir2
+ */
+
 int main(int argc, char **argv)
 {
      // Setting up the SIR
@@ -21,10 +26,20 @@ int main(int argc, char **argv)
 
   
 
-  int out = run_sir(sys, x,
-	  stepper,
-	  cm_vals,
-	  times);
+  cm_vals = run_sir(sys, x,
+		    stepper,
+		    1.0,
+		    100.0,
+		    cm_vals,
+		    times);
+
+  /* output */
+  int steps = 100 / 1 + 1;
+  for( size_t i=0; i < steps; i++ )
+    {
+      cout << i  << '\t' << cm_vals[i][0] << ' ' << cm_vals[i][1] << ' ' << cm_vals[i][2] << '\n';
+    }
+
 
   
 }

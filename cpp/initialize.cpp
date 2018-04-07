@@ -120,3 +120,40 @@ Graph initialize_nbr_graph(int N, int E, int env[][100]){
   }
   return g;
 }
+
+/*
+Convert the initial CM transition rates to probabilities
+INPUTS:
+T - max amount of time so T+1 steps
+K - number of states
+params - (beta, gamma, N) all doubles
+cm_vals - (T+1) x (K+1) matrix of times and CM values for each time step
+base_probs - 3d array of dimension TxKxK. entry ijk is the probability of an agent in compartment j moving to compartment k from time i to i+1.
+OUTPUTS:
+updated base_probs 3d array
+ */
+void initialize_base_probs(int T, int K, std::array<double,3> params,
+			     vector<state_type> cm_vals,
+			     double base_probs[][100][100]){
+  // TODO: MAKE MORE GENERIC
+
+  for(int tt=0; tt < T; tt++){
+    //printf("tt %d I %.2f N %.2f\n", tt, sir_vals[tt][2], N);
+    double beta = params[0];
+    double gamma = params[1];
+    double N = params[2];
+    
+    base_probs[tt][0][1] = beta *
+      cm_vals[tt][1] / N; // S to I
+    base_probs[tt][0][2] = 0.0; // S to R
+    base_probs[tt][0][0] = 1.0 - base_probs[tt][0][1]; // S to S
+    base_probs[tt][1][0] = 0.0; // I to S
+    base_probs[tt][1][1] = 1.0 - gamma; // I to I
+    base_probs[tt][1][2] = gamma; // I to R
+    base_probs[tt][2][0] = 0.0; // R to S
+    base_probs[tt][2][1] = 0.0; // R to I
+    base_probs[tt][2][2] = 1.0; // R to R
+    
+      
+  }
+}

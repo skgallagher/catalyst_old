@@ -1,7 +1,11 @@
+#ifndef INITIALIZE_H
+#define INITIALIZE_H
+
 #include <iostream>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/adjacency_iterator.hpp>
+#include "sir.hpp"
 
 using namespace std;
 
@@ -27,3 +31,8 @@ void initialize_envs(int N, int E, int max_env,
 
 Graph initialize_nbr_graph(int N, int E, int env[][100]);
 
+void initialize_base_probs(int T, int K, std::array<double,3> params,
+			   vector<state_type>cm_vals,
+			   double base_probs[][100][100]);
+
+#endif

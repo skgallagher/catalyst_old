@@ -67,11 +67,24 @@ void print_cm_vals(int T, int K, vector<state_type> cm_vals,
   n_steps = (int) (T / step_size + 1);
   for( int ii=0; ii< n_steps; ii++ ){
     std::cout << step_size * ii << ' ';
-    for(int kk=0 kk < K; kk++){
+    for(int kk=0; kk < K; kk++){
       std::cout << cm_vals[ii][kk] << ' ';
     }
     std::cout << '\n';
   }
    
+
+}
+
+void print_base_probs(int T, int K, double base_probs[][100][100]){
+  for(int tt=0; tt < T; tt++){
+    std::cout << "t=" << tt << '\n';
+    for(int ii=0; ii < K; ii++){
+      for(int jj=0; jj < K; jj++){
+	std::cout << base_probs[tt][ii][jj] << ' ';
+      }
+      std::cout << '\n';
+    }
+  }
 
 }

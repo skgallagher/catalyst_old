@@ -1,3 +1,6 @@
+#ifndef PRINT_H
+#define PRINT_H
+
 #include <iostream>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
@@ -24,3 +27,8 @@ void print_graph_nbrs(Graph g, int N);
 void print_cm_vals(int T, int K,
 		   vector<state_type> cm_vals,
 		   double step_size);
+
+
+void print_base_probs(int T, int K, double base_probs[][100][100]);
+
+#endif
