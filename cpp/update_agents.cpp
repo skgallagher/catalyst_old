@@ -7,7 +7,7 @@ SKG
 
 Compilation command:
 
-g++ catalyst.cpp initialize.cpp print.cpp random.cpp sir.cpp update.cpp -o catalyst
+g++ catalyst.cpp initialize.cpp print.cpp random.cpp sir.cpp -o catalyst
  */
 
 #include <iostream>
