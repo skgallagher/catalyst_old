@@ -132,7 +132,7 @@ int main(){
 
   std::cout << "base probs \n";
   print_base_probs(T, K, base_probs);
-  int do_am = 0;
+  int do_am = 0; // if 1, we do the AM specific calculations
 
   double agent_probs[N][100]; // prob of transitioning from current state to state k
 

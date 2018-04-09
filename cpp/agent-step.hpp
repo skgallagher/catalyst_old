@@ -16,6 +16,18 @@ void run_am_step(int tt, int N, int K,
 		 Graph neighbor_graph,
 		 int inf_states[],
 		 int sus_states[],
+		 int n_inf states,
+		 int n_sus_states,
 		 double agent_probs[][100]);
+
+void infect_agent(int tt, int N, int K,
+		  int ii, int jj,
+		  int env[][100],
+		  int infected_state[],
+		  int infector_state[],
+		  int infectious_states[],
+		  int susceptible_states[],
+		  double base_probs[][K][K],
+		  double agent_probs[][K])
 
 #endif
