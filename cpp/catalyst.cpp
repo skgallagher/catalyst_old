@@ -17,6 +17,8 @@ g++ catalyst.cpp initialize.cpp print.cpp random.cpp sir.cpp update.cpp -o catal
 #include "print.hpp"
 #include "random.hpp"
 #include "sir.hpp"
+#include "update.hpp"
+#include "agent-step.hpp"
 #include <boost/array.hpp>
 #include <boost/numeric/odeint.hpp>
 #include <boost/graph/graph_traits.hpp>
@@ -30,15 +32,17 @@ using namespace boost::numeric::odeint;
 int main(){
 
   // RANDOM SEED - seed set by microsecond.  Could lead to issues down the road when setting jobs in parallel.  May help to discard first few runs.
+  /////////////////////
   struct timeval t1;
   gettimeofday(&t1, NULL);
   srand(t1.tv_usec * t1.tv_sec);
-  //
+  /////////////////////////////
 
   // Read in controls
   // TODO
 
   // CONTROL SETTINGS
+  ///////////////////////////////////////////
   int N = 10; // number of agents
   int T = 10; // number of time steps
   int K = 3; // number of states
@@ -63,6 +67,7 @@ int main(){
   int init_env_counts[10][100]  = {{2, 1, 1, 0, 6},
 				   {0, 3, 2, 5, 0},
 				   {10, 0, 0, 0, 0}};
+  ///////////////////////////////////////////////////////
   
 
 
@@ -83,11 +88,11 @@ int main(){
 
   // Set up neighbor dictionary/graph
   
-  Graph g(N);
+  Graph neighbor_graph(N);
   std::cout << "neighbor graph \n";
   
-  g = initialize_nbr_graph(N, E, env);
-  print_graph_nbrs(g, N);
+  neighbor_graph = initialize_nbr_graph(N, E, env);
+  print_graph_nbrs(neighbor_graph, N);
 
   // Setting up the SIR
   // TODO: match up with above params
@@ -115,6 +120,7 @@ int main(){
 		    cm_vals,
 		    times);
 
+  std::cout << "CM values \n";
   print_cm_vals(T, K, cm_vals, step_size);
 
 
@@ -124,19 +130,40 @@ int main(){
 			cm_vals,
 			base_probs);
 
+  std::cout << "base probs \n";
   print_base_probs(T, K, base_probs);
+  int do_am = 0;
 
-  // for(int t=0; t < (T-1); t++){
-  //   if(do_am == 1){
-  //     // Run AM portion (individualized portion)
-  //     run_am_step();
-  //   }
-  //   // Update everything
-  //   update_agents();
-  //   update_agent_probs();
-  //   update_envs();
+  double agent_probs[N][100]; // prob of transitioning from current state to state k
+
+
+
+  for(int tt=0; tt < (T-1); tt++){
+    get_agent_probs_cm(T, N, K, tt,
+		       agent_status,
+		       base_probs,
+		       agent_probs);
+
+    if(do_am == 1){
+      // Run AM portion (individualized portion)
+      // Return is modified agent_probs
+      run_am_step(tt, N, K,
+		  agent_status,
+		  base_probs,
+		  env,
+		  neighbor_graph,
+		  agent_probs);
+    }
+    // Update everything
+    update_agents(tt, N, K,
+		  agent_probs,
+		  agent_status);
+    // update_agent_probs();
+    // update_envs();
         
-  // }
+  }
+  std::cout << "final agent status \n";
+  print_agents(N, T, agent_status);
   
   // // Write out stuff
   // write_agents();

@@ -88,3 +88,15 @@ void print_base_probs(int T, int K, double base_probs[][100][100]){
   }
 
 }
+
+void print_agent_probs(int tt, int N, int K,
+		       double agent_probs[][100]){
+  for(int ii=0; ii < N; ii++){
+    for(int jj=0; jj < K; jj++){
+      std::cout << agent_probs[ii][jj] << ' ';
+    }
+    std::cout << '\n';
+  }
+ 
+
+}

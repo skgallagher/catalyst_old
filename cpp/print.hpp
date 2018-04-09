@@ -31,4 +31,7 @@ void print_cm_vals(int T, int K,
 
 void print_base_probs(int T, int K, double base_probs[][100][100]);
 
+void print_agent_probs(int tt, int N, int K,
+		       double agent_probs[][100]);
+
 #endif

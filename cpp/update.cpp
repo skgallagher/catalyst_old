@@ -25,11 +25,11 @@ Modified agent_probs - a N x K matrix of probabilities from transitioning from a
 void get_agent_probs_cm(int T, int N, int K,
 		     int tt, int agent_status[][1000],
 			double base_probs[][100][100],
-			double agent_probs[][K]){
+			double agent_probs[][100]){
   int current_status;
   for(int ii = 0; ii < N; ii++){
     for(int kk=0; kk < K; kk++){
-      current_status = agent_status[tt][ii];
+      current_status = agent_status[ii][tt];
       agent_probs[ii][kk] = base_probs[tt][current_status][kk];
     }
   }
@@ -40,14 +40,14 @@ void get_agent_probs_cm(int T, int N, int K,
 /*
   (Potentially) Change states of agents states at the next time step (t+1)
   INPUTS:
-  t -- current time step
+  tt -- current time step
   N -- total number of agents
   K -- totalnumber of compartments
   agent_probs -- NxK array of probabilities of updating for each agent conditioned on their current state
   agent_status -- Nx(T+1) array of agent's status at time t
   OUTPUTS: modified agent_status with new agent states at time t+1
 */
-void update_agents(int t, int N, int K,
+void update_agents(int tt, int N, int K,
 		   double agent_probs[][100],
 		   int agent_status[][1000]){
   double probs[K];
@@ -55,7 +55,7 @@ void update_agents(int t, int N, int K,
     for(int kk=0; kk < K; kk++){
       probs[kk] = agent_probs[ii][kk];
     }
-    agent_status[t+1][ii] = draw_multinom(probs, K);
+    agent_status[ii][tt+1] = draw_multinom(probs, K);
   }
 }
 
