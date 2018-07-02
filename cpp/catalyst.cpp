@@ -157,7 +157,8 @@ int main(){
     // Update everything
     update_agents(tt, N, K,
 		  agent_probs,
-		  agent_status);
+		  agent_status
+		  );
     // update_agent_probs();
     // update_envs();
         
