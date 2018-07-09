@@ -19,12 +19,13 @@ catalyst <- function(agent_list, env_list,
     
     ## Initialize Agents
     ## Move to RCPP
-    agent_status <- initialize_agents(agent_list, N, T)
+    agent_status <- initialize_agents(agent_list$init_CM_vals,
+                                      N, K, T)
     
 
     ## Initialize environments
     ## Move to RCPP
-    env_status <- initialize_env(env_list, N, E, T)
+    env_status <- initialize_env(env_list, N, E)
 
     ## Initialize Disease/CM
     ## May eventually want to RCPP
@@ -34,7 +35,7 @@ catalyst <- function(agent_list, env_list,
     
                     
     ## Set up neighbor dictionary/graph (best in CPP)
-    neighbhor_list <- initialize_neighbors(env_list, N, E)
+    neighbhor_list <- initialize_neighbors(env_status, N, E)
     
     ## Run the program
     ## Need to run some sections in rcpp, inner loop the bette
@@ -43,7 +44,7 @@ catalyst <- function(agent_list, env_list,
                              base_probs,
                              env_status,
                              CM,
-                             neighbor_list
+                             neighbor_list,
                              output_params_list)
     return(catalyst_out)
                              
