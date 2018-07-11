@@ -29,9 +29,9 @@ catalyst <- function(agent_list, env_list,
 
     ## Initialize Disease/CM
     ## May eventually want to RCPP
-    CM <- create_CM(disease_list, N, K) # This is a function
+    CM_fxn<- make_CM_fxn(disease_list, N, K) # This is a function
 
-    base_probs <- initialize_probs(disease_list, N, K, T, CM)
+    base_probs <- initialize_probs(disease_list, CM_fxn)
     
                     
     ## Set up neighbor dictionary/graph (best in CPP)
