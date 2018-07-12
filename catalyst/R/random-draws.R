@@ -5,14 +5,18 @@
 #' @return vector of new states
 draw_multinom <- function(agent_probs){
     draws <- runif(n=nrow(agent_probs)) # draw N uniforms between 0 and 1
-    agent_cum <- apply(agent_probs, 1, cumsum) # get cumulative probs for each agent (these are the boundaries)
-    new_states <- integer(nrow(agent_probs)
-    for(kk in 1:ncol(agent_probs){
-        new_states <- ifelse(draws > agent_probs[, kk],
-                             new_states,
-                             kk)
+    agent_cum <- t(apply(agent_probs, 1, cumsum)) # get cumulative probs for each agent (these are the boundaries)
+    ## Add a zero column since we need K+1 boundaries to have K intervals
+    agent_cum <- cbind(0, agent_cum)
+    new_states <- rep(1, nrow(agent_probs))
+    for(kk in 2:(ncol(agent_probs)+1)){
+
+        new_states <- ifelse(draws < agent_cum[, kk] &
+                             draws >= agent_cum[, kk-1],
+                             kk-1,
+                             new_states)
     }
-    return(new_state)
+    return(new_states)
     
                    
     

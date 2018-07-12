@@ -1,4 +1,5 @@
 context("CM functions")
+library(deSolve)
 
 test_that("SIR works", {
     
@@ -9,10 +10,10 @@ test_that("SIR works", {
     disease_list <- list(params = params,
                          T = T,
                          init_vals = init_vals)
-    do_plot <- TRUE
+    do_plot <- FALSE
     out <- integrate_CM(disease_list,
                         do_plot = do_plot)
-                                    
+    expect_true(TRUE)
         
 
 })
