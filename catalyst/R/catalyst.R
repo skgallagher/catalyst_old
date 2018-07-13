@@ -93,26 +93,33 @@ run_cam_inner <- function(ll, agent_status,
                       neighbor_list,
                       output_params_list){
 
-    for(tt in 0:T){
+    for(tt in 0:(T-1)){
         if(do_AM){ # Run AM portion (individualized interactions)
             ## Return is modified agent_probs
+            ## Prob of contact and prob of transmission to get infectious.  Need a vector of eligible states to transfer to (S to I subsystem and other system which may also change according to env, agent covariates)
             agent_probs <- run_AM_step(tt, N, K,
                                        agent_status,
                                        base_probs,
                                        env_status,
-                                       neighbor_list)
+                                       neighbor_list,
+                                       agent_vars)
+        } else{
+            ## TODO: This can be improved in memory and probably time to update CMs
+            agent_probs <- NULL
         }
         ## Update agents based on agent probabilities
-        agent_status[tt + 2, ] <- update_agents(tt, N, K, agent_probs,
-                                                agent_status,
-                                                base_probs,
+        agent_status[tt + 2, ] <- update_agents(agent_probs,
+                                                agent_status[tt + 1, ],
+                                                base_probs[tt+1,,],
                                                 do_AM)
+
+        ## TODO
+        ## Update Agent Probabilities
+        base_probs <- update_base_probs(base_probs, tt)
+        ## Update environments
+        env_status <- update_env(env_status, tt)
     }
-    ## TODO
-    ## Update Agent Probabilities
-    base_probs <- update_base_prob(base_probs)
-    ## Update environments
-    env_status <- update_env(env_status)
+
     ## Summarize current step
     cam_output <- summarize_cam(agent_status, output_params_list, ll)
     return(cam_output)
