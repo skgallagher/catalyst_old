@@ -19,17 +19,23 @@ update_agents <- function(agent_probs,
         N <- length(current_agent_vec)
         K <- nrow(current_base_probs)
         ## Sort agents in terms of current status (at least store index)
-        new_indexing_vec <- sapply(1:K, function(kk){
+        new_indexing_list <- lapply(1:K, function(kk){
             which(current_agent_vec == kk) })
         ## Get bounds for groups
-        CM_bounds_list <- lapply(1:K, get_CM_bounds, current_base_probs)
+        CM_bounds_list <- lapply(1:K, get_CM_bounds,
+                                 current_base_probs,
+                                 new_indexing_list)
         ## Draw multinomials
         draws <- sapply(1:length(CM_bounds_list),
                         function(ii){
-                            draw_multinom(agent_probs = NULL,
-                                          bounds = CM_bounds_list[[ii]]$bounds,
-                                          N = CM_bounds_list[[ii]]$N)
+                            N <- CM_bounds_list[[ii]]$N
+                            if(N > 0){
+                                draw_multinom(agent_probs = NULL,
+                                              bounds = CM_bounds_list[[ii]]$bounds,
+                                              N = N)
+                            }
                         })
+                        
         ## Reorder according to indexing list
         new_states <- draws[new_indexing_vec]
         
@@ -42,8 +48,11 @@ update_agents <- function(agent_probs,
 #' 
 #' @param kk current compartment
 #' @param current_base_probs  KxK matrix where entry ij is cum prob of transfer from i to j conditioned on current time step
-get_CM_bounds_list <-function(kk, current_base_probs){
-    N <- length(inds)
+#' @param N number of people in the category
+#' @param indexing_list list of indices of agents currently in the same group
+get_CM_bounds_list <-function(kk, current_base_probs,
+                              indexing_list){
+    N <- length(indexing_list[[kk]])
     bounds <- c(0, cumsum(current_base_probs[kk, ]))
     return(list(N=N, bounds= bounds))
 }

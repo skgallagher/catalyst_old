@@ -1,14 +1,16 @@
 
 context("Random draws")
-library(deSolve)
 
-test_that("Multinomial draws", {
+
+test_that("Multinomial draws -- AM", {
     ## TODO
     ## RUN SOME TESTS
     agent_probs <- matrix(rep(c(.25, .75)), 5, ncol = 2, byrow = TRUE)
     
     ## Basic Tests
-    new_states <- draw_multinom(agent_probs)
+    new_states <- draw_multinom(agent_probs,
+                                bounds = NULL,
+                                N = nrow(agent_probs))
     expect_true(all(new_states %in% c(1,2)))
 
     ## When prob is 1, should always go to that state
@@ -45,5 +47,16 @@ test_that("Multinomial draws", {
     chisq_results <- chisq.test(x = as.numeric(table(results)),
                                 p =   base_probs)
     expect_true(chisq_results$p.value > .05)
+    
+})
+
+
+test_that("Multinomial Draws -- CM", {
+    agent_probs <- NULL
+    bounds <- c(0, 0, 1)
+    N <- 5
+    draws <- draw_multinom(agent_probs, bounds, N)
+    expect_true(all( draws == 2))
+    expect_true(length(draws) == 5)
     
 })
