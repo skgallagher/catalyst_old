@@ -20,21 +20,30 @@ update_agents <- function(agent_probs,
         K <- nrow(current_base_probs)
         ## Sort agents in terms of current status (at least store index)
         new_indexing_list <- lapply(1:K, function(kk){
-            which(current_agent_vec == kk) })
+            inds <- which(current_agent_vec == kk)
+            if(length(inds) > 0)   return(inds)
+            return(NULL)
+            
+        })
+        new_indexing_vec <- unlist(new_indexing_list)
         ## Get bounds for groups
-        CM_bounds_list <- lapply(1:K, get_CM_bounds,
+        CM_bounds_list <- lapply(1:K, get_CM_bounds_list,
                                  current_base_probs,
                                  new_indexing_list)
         ## Draw multinomials
-        draws <- sapply(1:length(CM_bounds_list),
+        draws <- unlist(sapply(1:length(CM_bounds_list),
                         function(ii){
                             N <- CM_bounds_list[[ii]]$N
                             if(N > 0){
-                                draw_multinom(agent_probs = NULL,
+                                out <- draw_multinom(agent_probs = NULL,
                                               bounds = CM_bounds_list[[ii]]$bounds,
                                               N = N)
+                                return(out)
                             }
-                        })
+                            
+                            
+                        }))
+        names(draws) <- NULL
                         
         ## Reorder according to indexing list
         new_states <- draws[new_indexing_vec]
@@ -50,6 +59,7 @@ update_agents <- function(agent_probs,
 #' @param current_base_probs  KxK matrix where entry ij is cum prob of transfer from i to j conditioned on current time step
 #' @param N number of people in the category
 #' @param indexing_list list of indices of agents currently in the same group
+#' @return list of N and bounds
 get_CM_bounds_list <-function(kk, current_base_probs,
                               indexing_list){
     N <- length(indexing_list[[kk]])
