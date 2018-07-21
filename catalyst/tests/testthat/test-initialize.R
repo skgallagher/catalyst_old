@@ -8,8 +8,8 @@ test_that("Agents are correct", {
     T <- 3
     agents <- initialize_agents(init_CM_vals, N,
                                 K, T)
-    testthat::expect_true(all(agents[, 1] == c(1, 1, 1, 2, 3)))
-    testthat::expect_equal(dim(agents), c(N, T+1))
+    testthat::expect_true(all(agents[1, ] == c(1, 1, 1, 2, 3)))
+    testthat::expect_equal(dim(agents), c(T+1, N))
     
     init_CM_vals <- c(0, 4, 1)
     N <- sum(init_CM_vals)
@@ -17,7 +17,7 @@ test_that("Agents are correct", {
     T <- 3
     agents <- initialize_agents(init_CM_vals, N,
                                 K, T)
-    testthat::expect_true(all(agents[, 1] == c(2, 2, 2, 2, 3)))
+    testthat::expect_true(all(agents[1,] == c(2, 2, 2, 2, 3)))
     
 
     }) 

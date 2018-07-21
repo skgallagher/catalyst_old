@@ -74,7 +74,7 @@ get_CM_bounds_list <-function(kk, current_base_probs,
 #' @param tt current time step
 #' @return updated base_probs
 update_base_probs <- function(base_probs, tt){
-    tt <- id(tt)
+    tt <- identity(tt)
     return(base_probs)
 }
 
@@ -84,6 +84,6 @@ update_base_probs <- function(base_probs, tt){
 #' @param env_status a NxE matrix where entry ij is agent i's value assignment to environment j.  An assignment of 0 corresponds to a NULL assignment.  Agents with value 0 do not belong to the same environment
 #' @param tt current time step
 update_env <- function(env_status, tt){
-    tt <- id(tt)
+    tt <- identity(tt)
     return(env_status)
 }

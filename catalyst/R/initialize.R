@@ -7,13 +7,13 @@
 #' @param N number of total agents
 #' @param K number of total disease states
 #' @param T max time, integer value
-#' @return  N x (T+1) matrix of agent status with the first column (t=0) filled in with statuses corresponding to the init CM vals.  The other states are zero
+#' @return  (T+1) x N matrix of agent status with the first row (t=0) filled in with statuses corresponding to the init CM vals.  The other states are zero
 initialize_agents <- function(init_CM_vals, N, K, T){
-    agent_status <- matrix(0, ncol = (T + 1), nrow = N)
+    agent_status <- matrix(0, nrow = (T + 1), ncol = N)
     if(sum(init_CM_vals) != N) stop("The initial CM values do not sum to N")
     if(length(init_CM_vals) != K) stop("There must be K initial values")
     ## Fill in initial values
-    agent_status[, 1] <- rep(1:K, times  = init_CM_vals)
+    agent_status[1, ] <- rep(1:K, times  = init_CM_vals)
     return(agent_status)
 }
 
@@ -116,3 +116,15 @@ initialize_probs <- function(disease_list, CM_fxn = SIR_fxn){
 
 }
 
+
+#' Turn the base probs into individualized probs
+#'
+#' @param current_base_probs KxK matrix where entry ij is prob of transfer from i to j conditioned on current time step
+#' @param current_agent_status integer vector of length N consisting of current status of agent
+#' @return agent_probs N x K matrix where entry ni is probability of moving to state i conditioned on current state for agent n
+base_to_agent_probs <- function(current_base_probs,
+                                current_agent_status){
+    agent_probs <- current_base_probs[current_agent_status,]
+    return(agent_probs)
+
+}
