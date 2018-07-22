@@ -30,6 +30,7 @@ catalyst <- function(agent_list, env_list,
     ## Initialize Disease/CM
     ## May eventually want to RCPP
     CM_fxn <- make_CM_fxn(disease_list, N, K) # This is a function
+    disease_list$CM_fxn <- CM_fxn
 
     base_probs <- initialize_probs(disease_list, CM_fxn)
     
@@ -82,7 +83,7 @@ run_cam <- function(sim_list,
     }
 
     did_write <- write_output(output_list,
-                              output_params_list, sim_list, CM)
+                              output_params_list, disease_list, CM)
                  
     return(output_list)
 

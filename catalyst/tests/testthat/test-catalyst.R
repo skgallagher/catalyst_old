@@ -90,6 +90,7 @@ test_that("run_cam_inner() is working", {
     output_params_list <- list(do_write = FALSE,
                                save_sims = FALSE,
                                results_dir = "~/catalyst_results",
+                               base_name = "sim_results"
                                verbose = TRUE)
     neighbor_list <- initialize_neighbors(env_list$env_status,
                                           env_list$N,
