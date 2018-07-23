@@ -3,6 +3,7 @@
 ## July 2, 2018
 ## To be integrated with current cpp code
 
+#' @export
 catalyst <- function(agent_list, env_list,
                          disease_list,
                          sim_list,
@@ -47,7 +48,8 @@ catalyst <- function(agent_list, env_list,
                             CM_fxn,
                             neighbor_list,
                             output_params_list,
-                            disease_params_list,
+                            disease_list,
+                            agent_list,
                             do_AM = FALSE)
     return(catalyst_out)
                              
@@ -56,34 +58,64 @@ catalyst <- function(agent_list, env_list,
 
 
 
-
+#' Run the compartment-agent-based model
+#'
+#' @param sim_list list with
+#' "T" total amount of time 0 to T inclusive
+#' "L" total number of simulations to run
+#' "do_parallel" logical
+#' @param agent_status integer matrix of size (T+1)xN where entry nt is the state of agent n at time t-1
+#' @param base_probs T x K x K matrix where entry tij is the probability of an agent in state i moving to state j from time t to t+1
+#' @param env_status a NxE matrix where entry ij is agent i's value assignment to environment j.  An assignment of 0 corresponds to a NULL assignment.  Agents with value 0 do not belong to the same environment
+#' @param neighbor_list list of length N where entry n is a vector of indices of neighbors, that is people who share an environment assignment of non-zero for the same category.  The list entry has a 0 element if it has no neighbors
+#' @param output_params_list list including "do_write" a logical,
+#' "save_sims" a logical
+#' "results_dir" a character string
+#' "verbose" a logical
+#' @param disease_params_list list including
+#' "K" the number of states
+#' "infection_states" the indices of the states that can infect others
+#' "init_vals" vector of size K that sums to N, initial values in each of the states at time t=0
+#' "params" vector of disease parameters (e.g. beta, gamma)
+#' "params_names" optional vector of parameter names
+#' T - total number of time steps, 0 to T-1 inclusive
+#' CM_fxn - the compartment model function
+#' @param agent_list list with
+#' "init_CM_vals" vector of size K where entry k is the size of state k at time 0. 
+#' "N" number of total agents
+#' "K" number of total disease states
+#' "T" max time, integer value
+#' @param do_AM logical.  Default is FALSE
+#' @return a summarized list of the simulation
 run_cam <- function(sim_list,
                     agent_status,
                     base_probs,
                     env_status,
-                    CM,
                     neighbor_list,
                     output_params_list,
                     disease_params_list,
+                    agent_list,
                     do_AM = FALSE){
 
 
 
+    cam_output <- vector(mode = "list", length = sim_list$L)
     ## TODO: PARALLELIZE//CPP
     for(ll in 1:sim_list$L){ ## Number of runs
-        output_list <- run_cam_inner(ll, agent_status,
-                      base_probs,
-                      env_status,
-                      neighbor_list,
-                      output_params_list,
-                      disease_params_list,
-                      do_AM)
+        cam_output[[ll]] <- run_cam_inner(ll, agent_status,
+                                     base_probs,
+                                     env_status,
+                                     neighbor_list,
+                                     output_params_list,
+                                     disease_params_list,
+                                     agent_list,
+                                     do_AM)
     }
 
-    did_write <- write_output(output_list,
-                              output_params_list, disease_list, CM)
+    did_write <- write_output(cam_output,
+                              output_params_list, disease_params_list, CM)
                  
-    return(output_list)
+    return(cam_output)
 
 
 
@@ -108,6 +140,12 @@ run_cam <- function(sim_list,
 #' "params_names" optional vector of parameter names
 #' T - total number of time steps, 0 to T-1 inclusive
 #' CM_fxn - the compartment model function
+#' @param agent_list list with
+#' "init_CM_vals" vector of size K where entry k is the size of state k at time 0. 
+#' "N" number of total agents
+#' "K" number of total disease states
+#' "T" max time, integer value
+#' "agent_vars" covariates of agents 
 #' @param do_AM logical.  Default is FALSE
 #' @return a summarized list of the simulation
 run_cam_inner <- function(ll, agent_status,
@@ -116,6 +154,7 @@ run_cam_inner <- function(ll, agent_status,
                       neighbor_list,
                       output_params_list,
                       disease_params_list,
+                      agent_list,
                       do_AM = FALSE){
     ## TODO:  Function to do RCPP for
     T <- dim(base_probs)[1]
@@ -126,10 +165,10 @@ run_cam_inner <- function(ll, agent_status,
             agent_probs <- run_AM_step(tt, N, K,
                                        agent_status[tt+1, ],
                                        base_probs[tt+1,,],
-                                       env_status[tt+1,],
+                                       env_status,
                                        neighbor_list,
                                        disease_params_list,
-                                       agent_vars)
+                                       agent_list)
         } else{
             ## TODO: This can be improved in memory and probably time to update CMs
             agent_probs <- NULL

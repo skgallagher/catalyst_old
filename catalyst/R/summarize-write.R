@@ -84,10 +84,11 @@ write_output <- function(output_list,
                          agent_list,
                          env_list,
                          run_AM){
-    
-    verbose <- output_params$verbose
-    results_dir <- output_params$results_dir
-    base_name <- output$params_base_name
+
+    do_write <- output_params_list$do_write
+    verbose <- output_params_list$verbose
+    results_dir <- output_params_list$results_dir
+    base_name <- output_params_list$base_name
     
     if(!do_write){
         print.verbose(verbose,
@@ -110,7 +111,7 @@ write_output <- function(output_list,
         write.csv(n_states_df, file.path(results_dir, df_path),
                   row.names = FALSE)
         ## And the rest of the params
-        input_path <- paste0(base_name, "run_params.RDS")
+        input_path <- paste0(base_name, "_run_params.RDS")
         run_parameters <- list(output_params_list = output_params_list,
                          sim_list = sim_list,
                          disease_params_list = disease_params_list,
@@ -119,8 +120,7 @@ write_output <- function(output_list,
                          run_AM = run_AM)
         print.verbose(verbose,
                       str = paste0("Writing run parameters to ", input_path))
-        saveRDS(run_parameters, file.path(results_dir, df_path),
-                  row.names = FALSE)
+        saveRDS(run_parameters, file.path(results_dir, input_path))
     }
     return(TRUE)
 }

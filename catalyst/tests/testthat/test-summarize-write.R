@@ -50,7 +50,7 @@ test_that("Write out output", {
     do_AM <- FALSE
     disease_params_list <- list(K = 3, init_vals = c(3, 1, 0),
                                 params = c(beta = 1, gamma = 1),
-                                T = 3, infection_states = c(2)
+                                T = 3, infection_states = c(2),
                                 CM_fxn = SIR_fxn)
     base_probs <- initialize_probs(disease_params_list,
                                    SIR_fxn)
@@ -83,10 +83,37 @@ test_that("Write out output", {
     expect_equal(dim(df), c(8, 5))
 
     ## Write everything
-    output_params_list <- list(do_write = FALSE,
+    output_params_list <- list(do_write = TRUE,
                                save_sims = FALSE,
-                               results_dir = NULL,
+                               results_dir = "~/temp_dir",
+                               base_name = "my_sims",
                                verbose = TRUE)
+    agent_list <- NULL
+    env_list <- NULL
+    sim_list <- list(L = 2)
+    run_AM <- FALSE
+    did_write <- write_output(cam_output,
+                              output_params_list,
+                              sim_list,
+                              disease_params_list,
+                              agent_list,
+                              env_list,
+                              run_AM)
+
+    out_df <- read.csv(file.path(output_params_list$results_dir,
+                                 paste0(output_params_list$base_name,
+                                        "_nstates.csv")))
+    expect_equal(df, out_df)
+    input_params <- readRDS(file.path(output_params_list$results_dir,
+                                 paste0(output_params_list$base_name,
+                                        "_run_params.RDS")))
+    expect_true(all(names(input_params) %in% c("output_params_list",
+                                               "sim_list",
+                                               "disease_params_list",
+                                               "agent_list",
+                                               "env_list",
+                                               "run_AM")))
+    unlink(output_params_list$results_dir, recursive = TRUE)
     
     
 })

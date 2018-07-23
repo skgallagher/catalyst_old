@@ -90,12 +90,12 @@ test_that("run_cam_inner() is working", {
     output_params_list <- list(do_write = FALSE,
                                save_sims = FALSE,
                                results_dir = "~/catalyst_results",
-                               base_name = "sim_results"
+                               base_name = "sim_results",
                                verbose = TRUE)
     neighbor_list <- initialize_neighbors(env_list$env_status,
                                           env_list$N,
                                           env_list$E)
-    base_probs <- initialize_probs(disease_list, CM_fxn)
+    base_probs <- initialize_probs(disease_params_list, CM_fxn)
     agent_probs <- NULL
     do_AM <- FALSE
 ##########################################
@@ -105,6 +105,7 @@ test_that("run_cam_inner() is working", {
                       neighbor_list,
                       output_params_list,
                       disease_params_list,
+                      agent_list = NULL,
                       do_AM)
     expect_true(cam_output$ll == ll)
     expect_equal(dim(cam_output$n_states), c(T+1, K))
@@ -117,3 +118,74 @@ test_that("run_cam_inner() is working", {
 
 
 
+
+
+test_that("run_cam() is working", {
+
+    ## Setting up multitude of variables
+    #######################################################
+    init_CM_vals <- c(950, 50, 0)
+    N <- sum(init_CM_vals)
+    K <- 3
+    T <- 5
+    L <- 5
+    agents <- initialize_agents(init_CM_vals, N,
+                                K, T)
+    agent_status <- agents
+    ## Enviroment
+    tab <- table(rep(1, N)) # We are all neighbors on this blessed day
+    env_list <- list()
+    env_list$init_env_table <- tab
+    env_list$N <- sum(tab)
+    env_list$E <- length(tab)
+    env <- initialize_env(env_list, N, E)
+    env_list$env_status <- env
+    ## Disease params
+    params <- c(beta=.1, gamma = .03)
+    params_names <- c("beta", "gamma")
+    disease_params_list <- list(K = K, infection_states = c(2),
+                         init_vals = init_CM_vals,
+                         params = params,
+                         params_names = params_names,
+                         T = T,
+                         CM_fxn = SIR_fxn)
+    sim_list <- list(L = L)
+    run_AM <- FALSE
+    output_params_list <- list(do_write = FALSE,
+                               save_sims = FALSE,
+                               results_dir = "~/catalyst_results",
+                               base_name = "sim_results",
+                               verbose = TRUE)
+    neighbor_list <- initialize_neighbors(env_list$env_status,
+                                          env_list$N,
+                                          env_list$E)
+    base_probs <- initialize_probs(disease_params_list, CM_fxn)
+    agent_probs <- NULL
+    do_AM <- FALSE
+##########################################
+    cam_output <- run_cam(sim_list,
+                    agent_status,
+                    base_probs,
+                    env_status,
+                    neighbor_list,
+                    output_params_list,
+                    disease_params_list,
+                    agent_list = NULL,
+                    do_AM = do_AM)
+    expect_equal(length(cam_output), L) 
+})
+
+
+## Calculation for total transmission prob to individual transmission prob
+## x <- .4
+## N <- 2
+## y <- 1 - x^(1/N)
+## B <- 1000
+## is_infected <- integer(B)
+## for(bb in 1:B){
+##     z <- rbinom(N, 1, y)
+##     if(sum(z) ==  0){
+##         is_infected[bb] <- 1
+##     }
+## }
+## mean(is_infected)
