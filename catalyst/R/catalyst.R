@@ -67,13 +67,11 @@ run_cam <- function(sim_list,
                     disease_params_list,
                     do_AM = FALSE){
 
-    ## TODO: DOUBLE CHECK INDEX
-    agent_probs <- base_probs[1, ] ## Initialize the agent probabilities
+
 
     ## TODO: PARALLELIZE//CPP
     for(ll in 1:sim_list$L){ ## Number of runs
         output_list <- run_cam_inner(ll, agent_status,
-                      agent_probs,
                       base_probs,
                       env_status,
                       neighbor_list,
@@ -95,7 +93,6 @@ run_cam <- function(sim_list,
 #'
 #' @param ll simulation number
 #' @param agent_status integer matrix of size (T+1)xN where entry nt is the state of agent n at time t-1
-#' @param agent_probs NULL if do_AM is FALSE.  Else a NxK matrix where entry ni is prob of moving to state i conditioned on current state for agent n
 #' @param base_probs T x K x K matrix where entry tij is the probability of an agent in state i moving to state j from time t to t+1
 #' @param env_status a NxE matrix where entry ij is agent i's value assignment to environment j.  An assignment of 0 corresponds to a NULL assignment.  Agents with value 0 do not belong to the same environment
 #' @param neighbor_list list of length N where entry n is a vector of indices of neighbors, that is people who share an environment assignment of non-zero for the same category.  The list entry has a 0 element if it has no neighbors
@@ -114,7 +111,6 @@ run_cam <- function(sim_list,
 #' @param do_AM logical.  Default is FALSE
 #' @return a summarized list of the simulation
 run_cam_inner <- function(ll, agent_status,
-                      agent_probs,
                       base_probs,
                       env_status,
                       neighbor_list,
@@ -123,13 +119,12 @@ run_cam_inner <- function(ll, agent_status,
                       do_AM = FALSE){
     ## TODO:  Function to do RCPP for
     T <- dim(base_probs)[1]
-    for(tt in 0:(T-2)){
+    for(tt in 0:(T-1)){
         if(do_AM){ # Run AM portion (individualized interactions)
             ## Return is modified agent_probs
             ## Prob of contact and prob of transmission to get infectious.  Need a vector of eligible states to transfer to (S to I subsystem and other system which may also change according to env, agent covariates)
             agent_probs <- run_AM_step(tt, N, K,
                                        agent_status[tt+1, ],
-                                       agent_probs,
                                        base_probs[tt+1,,],
                                        env_status[tt+1,],
                                        neighbor_list,

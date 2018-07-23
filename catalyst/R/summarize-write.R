@@ -82,7 +82,7 @@ write_output <- function(output_list,
                          sim_list,
                          disease_params_list,
                          agent_list,
-                         env_list
+                         env_list,
                          run_AM){
     
     verbose <- output_params$verbose
@@ -115,7 +115,7 @@ write_output <- function(output_list,
                          sim_list = sim_list,
                          disease_params_list = disease_params_list,
                          agent_list = agent_list,
-                         env_list = env_list
+                         env_list = env_list,
                          run_AM = run_AM)
         print.verbose(verbose,
                       str = paste0("Writing run parameters to ", input_path))

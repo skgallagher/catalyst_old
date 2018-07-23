@@ -100,7 +100,6 @@ test_that("run_cam_inner() is working", {
     do_AM <- FALSE
 ##########################################
     cam_output <- run_cam_inner(ll, agent_status,
-                      agent_probs,
                       base_probs,
                       env_status,
                       neighbor_list,
