@@ -27,6 +27,8 @@
 #' "params_names" optional vector of parameter names
 #' T - total number of time steps, 0 to T-1 inclusive
 #' CM_fxn - the compartment model function
+#' "transmission_probs" n_infectious_states x K where entry ij is prob of agent in infectious state i agent to state j.  NOTE: n_infectious_states are those that CAN transmit the disease.  
+#' "contact_probs" probability of contact with another agent
 #' @param output_params_list list including "do_write" a logical,
 #' "save_sims" a logical
 #' "results_dir" a character string
@@ -171,6 +173,8 @@ run_cam <- function(sim_list,
 #' "params_names" optional vector of parameter names
 #' T - total number of time steps, 0 to T-1 inclusive
 #' CM_fxn - the compartment model function
+#' "transmission_probs" n_infectious_states x n_infection_states where entry ij is prob of agent in infectious state i agent to state j.  NOTE: n_infectious_states are those that CAN transmit the disease.  n_infection_states can include latently infectious individuals
+#' "contact_probs" probability of contact with another agent
 #' @param agent_list list with
 #' "init_CM_vals" vector of size K where entry k is the size of state k at time 0. 
 #' "N" number of total agents

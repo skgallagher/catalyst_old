@@ -101,7 +101,7 @@ test_that("run_cam_inner() is working", {
 ##########################################
     cam_output <- run_cam_inner(ll, agent_status,
                       base_probs,
-                      env_status,
+                      env_list$env_status,
                       neighbor_list,
                       output_params_list,
                       disease_params_list,

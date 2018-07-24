@@ -99,7 +99,7 @@ write_output <- function(output_list,
                                    " exists."))
         if(!dir.exists(results_dir)){
             print.verbose(verbose,
-                          str = paste0("Creating directory: ,",
+                          str = paste0("Creating directory: ",
                                        results_dir))
             dir.create(results_dir, recursive = TRUE)
         }
