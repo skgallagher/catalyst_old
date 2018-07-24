@@ -120,60 +120,82 @@ test_that("run_cam_inner() is working", {
 
 
 
-test_that("run_cam() is working", {
-
+test_that("catalyst() works", {
+#################################################
     ## Setting up multitude of variables
-    #######################################################
+################################################
+    ##
+
+###########################################
+###### AGENT_LIST#####################n
+######################################
     init_CM_vals <- c(950, 50, 0)
     N <- sum(init_CM_vals)
     K <- 3
-    T <- 5
-    L <- 5
-    agents <- initialize_agents(init_CM_vals, N,
-                                K, T)
-    agent_status <- agents
-    ## Enviroment
+    T <- 100
+    agent_list <- list(init_CM_vals = init_CM_vals,
+                       N = N,
+                       K = K,
+                       T = T)
+#########################################
+    ## ENVIRONMENT ######################
+#####################################
     tab <- table(rep(1, N)) # We are all neighbors on this blessed day
     env_list <- list()
     env_list$init_env_table <- tab
-    env_list$N <- sum(tab)
     env_list$E <- length(tab)
-    env <- initialize_env(env_list, N, E)
-    env_list$env_status <- env
-    ## Disease params
-    params <- c(beta=.1, gamma = .03)
+    env_list$N <- N
+
+####################################
+    ## SIM LIST #################
+##########################
+    L <- 10
+    sim_list <- list(L = L, do_parallel = FALSE)
+####################################
+    
+######################################
+    ## DISEASE_PARAMS_LIST
+#######################################
+    params <- c(beta = .1, gamma = .03)
     params_names <- c("beta", "gamma")
-    disease_params_list <- list(K = K, infection_states = c(2),
-                         init_vals = init_CM_vals,
-                         params = params,
-                         params_names = params_names,
-                         T = T,
-                         CM_fxn = SIR_fxn)
-    sim_list <- list(L = L)
-    run_AM <- FALSE
+    infection_states <- c(2) # I is the infection state
+    disease_params_list <- list(K = K,
+                                infection_states = infection_states,
+                                init_vals = init_CM_vals,
+                                params = params,
+                                params_names = params_names,
+                                T = T,
+                                CM_fxn = SIR_fxn)
+########################################
+    ## OUTPUT_PARAMS_LIST #################
+##########################
     output_params_list <- list(do_write = FALSE,
                                save_sims = FALSE,
-                               results_dir = "~/catalyst_results",
+                               results_dir = "~/test_catalyst_results",
                                base_name = "sim_results",
                                verbose = TRUE)
-    neighbor_list <- initialize_neighbors(env_list$env_status,
-                                          env_list$N,
-                                          env_list$E)
-    base_probs <- initialize_probs(disease_params_list, CM_fxn)
-    agent_probs <- NULL
+    
+########################################
+    ## do_AM #################
+##########################
     do_AM <- FALSE
+###################################
+    
 ##########################################
-    cam_output <- run_cam(sim_list,
-                    agent_status,
-                    base_probs,
-                    env_status,
-                    neighbor_list,
-                    output_params_list,
-                    disease_params_list,
-                    agent_list = NULL,
-                    do_AM = do_AM)
-    expect_equal(length(cam_output), L) 
+## Actually RUN CATALYST
+##########################
+    time <- proc.time()[3]
+    cam_output <- catalyst(agent_list, env_list,
+                     disease_params_list,
+                     sim_list,
+                     output_params_list,
+                     do_AM = FALSE)
+    proc.time()[3] - time
+    expect_equal(length(cam_output), L)
 })
+
+
+
 
 
 ## Calculation for total transmission prob to individual transmission prob

@@ -3,18 +3,48 @@
 ## July 2, 2018
 ## To be integrated with current cpp code
 
+
+#' Run the compartment-agent-based model
+#' 
+#' @param agent_list list with
+#' "init_CM_vals" vector of size K where entry k is the size of state k at time 0. 
+#' "N" number of total agents
+#' "K" number of total disease states
+#' "T" max time, integer value
+#' @param env_list list with
+#' "init_env_table" a contingency table of number of individuals in each each cross section.  Each dimension name of the table corresponds to a number 1 to E_j, the number of total specific elements in Environment j
+#' "E" total number of environment types (e.g. school and workplace is 2)
+#' "N" total number of agents
+#' @param sim_list list with
+#' "L" total number of simulations to run
+#' "do_parallel" logical
+#' @param disease_params_list list including
+#' "K" the number of states
+#' "infection_states" the indices of the states that can infect others
+#' "susceptible_states" the indices of the states that are susceptible
+#' "init_CM_vals" vector of size K that sums to N, initial values in each of the states at time t=0
+#' "params" vector of disease parameters (e.g. beta, gamma)
+#' "params_names" optional vector of parameter names
+#' T - total number of time steps, 0 to T-1 inclusive
+#' CM_fxn - the compartment model function
+#' @param output_params_list list including "do_write" a logical,
+#' "save_sims" a logical
+#' "results_dir" a character string
+#' "verbose" a logical
+#' @param do_AM logical.  Default is FALSE
+#' @return a summarized list of the simulation
 #' @export
 catalyst <- function(agent_list, env_list,
-                         disease_list,
-                         sim_list,
-                         run_AM = FALSE,
-                         output_params_list){
+                     disease_params_list,
+                     sim_list,
+                     output_params_list,
+                     do_AM = FALSE){
 
 
-    ## Imortant numbers
+    ## Imortant numbers to extract
     N <- agent_list$N # number of agents
-    T <- sim_list$T # total time steps, inclusive 0 to T
-    K <- disease_list$K # total number of states
+    T <- disease_params_list$T # total time steps, inclusive 0 to T
+    K <- disease_params_list$K # total number of states
     E <- env_list$E # total number of environment TYPES (e.g. type is school and workplace not Center Twp Elementary and Butler High School)
     L <- sim_list$L # total number of runs
     
@@ -30,10 +60,10 @@ catalyst <- function(agent_list, env_list,
 
     ## Initialize Disease/CM
     ## May eventually want to RCPP
-    CM_fxn <- make_CM_fxn(disease_list, N, K) # This is a function
-    disease_list$CM_fxn <- CM_fxn
+    CM_fxn <- make_CM_fxn(disease_params_list, N, K) # This is a function
+    disease_params_list$CM_fxn <- CM_fxn
 
-    base_probs <- initialize_probs(disease_list, CM_fxn)
+    base_probs <- initialize_probs(disease_params_list, CM_fxn)
     
                     
     ## Set up neighbor dictionary/graph (best in CPP)
@@ -45,10 +75,9 @@ catalyst <- function(agent_list, env_list,
                             agent_status,
                             base_probs,
                             env_status,
-                            CM_fxn,
                             neighbor_list,
                             output_params_list,
-                            disease_list,
+                            disease_params_list,
                             agent_list,
                             do_AM = FALSE)
     return(catalyst_out)
@@ -75,6 +104,7 @@ catalyst <- function(agent_list, env_list,
 #' @param disease_params_list list including
 #' "K" the number of states
 #' "infection_states" the indices of the states that can infect others
+#' "susceptible_states" the indices of the states that are susceptible
 #' "init_vals" vector of size K that sums to N, initial values in each of the states at time t=0
 #' "params" vector of disease parameters (e.g. beta, gamma)
 #' "params_names" optional vector of parameter names
@@ -86,7 +116,7 @@ catalyst <- function(agent_list, env_list,
 #' "K" number of total disease states
 #' "T" max time, integer value
 #' @param do_AM logical.  Default is FALSE
-#' @return a summarized list of the simulation
+#' @return a summarized list of the simulation#' Run the compartment-agent-based model
 run_cam <- function(sim_list,
                     agent_status,
                     base_probs,
@@ -135,6 +165,7 @@ run_cam <- function(sim_list,
 #' @param disease_params_list list including
 #' "K" the number of states
 #' "infection_states" the indices of the states that can infect others
+#' "susceptible_states" the indices of the states that are susceptible
 #' "init_vals" vector of size K that sums to N, initial values in each of the states at time t=0
 #' "params" vector of disease parameters (e.g. beta, gamma)
 #' "params_names" optional vector of parameter names
@@ -165,10 +196,10 @@ run_cam_inner <- function(ll, agent_status,
             agent_probs <- run_AM_step(tt, N, K,
                                        agent_status[tt+1, ],
                                        base_probs[tt+1,,],
-                                       env_status,
                                        neighbor_list,
                                        disease_params_list,
-                                       agent_list)
+                                       agent_list,
+                                       env_list)
         } else{
             ## TODO: This can be improved in memory and probably time to update CMs
             agent_probs <- NULL
