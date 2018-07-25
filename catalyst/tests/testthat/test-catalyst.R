@@ -252,6 +252,7 @@ test_that("catalyst() works (do_AM = TRUE)", {
     params <- c(beta = .1, gamma = .03)
     params_names <- c("beta", "gamma")
     infection_states <- c(2) # I is the infection state
+    susceptible_states <- c(1) # S is the susceptible state
     transmission_probs <- matrix(c(1, 0, 0,
                                    0, 1, 0,
                                    0, 0, 1),
@@ -259,6 +260,7 @@ test_that("catalyst() works (do_AM = TRUE)", {
     contact_probs = 1
     disease_params_list <- list(K = K,
                                 infection_states = infection_states,
+                                susceptible_states = susceptible_states,
                                 init_vals = init_CM_vals,
                                 params = params,
                                 params_names = params_names,
@@ -290,7 +292,10 @@ test_that("catalyst() works (do_AM = TRUE)", {
                      disease_params_list,
                      sim_list,
                      output_params_list,
-                     do_AM = FALSE)
+                     do_AM = do_AM)
     proc.time()[3] - time
     expect_equal(length(cam_output), L)
+    ##  A one liner to extract the number of susceptibles in each simulation for each time step (minus the initial.  They should all get infected.
+    ## This is not good code
+    expect_true(all(sapply(lapply(cam_output, "[[", 1), "[", -1, 1) == 0))
 })

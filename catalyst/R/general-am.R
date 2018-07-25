@@ -58,23 +58,31 @@ run_AM_step <- function(tt, N, K,
     rolling_sus_inds <- current_states$susceptible_inds
     if(length(current_states$infectious_inds) > 0){
         for (inf_ind in current_states$infectious_inds){
-            browser()
             neighbor_inds <- neighbor_list[[inf_ind]] # Neighbors
             ## Find susceptible neighbors
             ## TODO:  Could probably add to infection process
             susceptible_neighbors <- intersect(rolling_sus_inds,
                                                neighbor_inds)
             if(length(susceptible_neighbors) > 0){
-                agent_probs[susceptible_neighbors, ] <- infect_neighbors(
+                agent_probs[susceptible_neighbors, ] <- infect_neighbors_draws(
                     current_agent_status[inf_ind],
                     agent_probs[susceptible_neighbors, ],
                     susceptible_neighbors,
                     disease_params_list,
                     agent_list$agent_vars
                 )
-                rolling_sus_inds <- update_susceptible_inds(rolling_sus_inds, agent_probs[susceptible_neighbors, ],
-                                                            susceptible_neighbors)
+                rolling_sus_inds <- update_susceptible_inds(
+                    rolling_sus_inds,
+                    agent_probs[susceptible_neighbors, ],
+                    disease_params_list$infection_states,
+                    susceptible_neighbors
+                )
 
+            } else {
+                break
+            }
+            if(length(rolling_sus_inds) == 0){
+                break
             }
         }
         
