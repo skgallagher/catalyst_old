@@ -31,7 +31,8 @@
 #' @param env_list list with
 #' "init_env_table" a contingency table of number of individuals in each each cross section.  Each dimension name of the table corresponds to a number 1 to E_j, the number of total specific elements in Environment j
 #' "E" total number of environment types (e.g. school and workplace is 2)
-#' "N" total number of agents 
+#' "N" total number of agents
+#' @return updated agent_probs
 run_AM_step <- function(tt, N, K,
                         current_agent_status,
                         current_base_probs,
@@ -47,7 +48,7 @@ run_AM_step <- function(tt, N, K,
     ## Modify agent_probs IF infected
     ## Remove SUSCEPTIBLE FROM INFECTION LIST?
 
-    agent_probs <- make_n_states_df(current_base_probs,
+    agent_probs <- base_to_agent_probs(current_base_probs,
                                     current_agent_status)
 
     current_states <- get_agent_state_inds(current_agent_status,
@@ -55,8 +56,9 @@ run_AM_step <- function(tt, N, K,
                                            disease_params_list$susceptible_states)
 
     rolling_sus_inds <- current_states$susceptible_inds
-    if(current_states$infectious_inds > 0){
+    if(length(current_states$infectious_inds) > 0){
         for (inf_ind in current_states$infectious_inds){
+            browser()
             neighbor_inds <- neighbor_list[[inf_ind]] # Neighbors
             ## Find susceptible neighbors
             ## TODO:  Could probably add to infection process
@@ -147,6 +149,7 @@ update_susceptible_inds <- function(rolling_sus_inds,
 #' "transmission_probs" n_infectious_states x K where entry ij is prob of agent in infectious state i agent to state j.  NOTE: n_infectious_states are those that CAN transmit the disease.  
 #' "contact_probs" probability of contact with another agent
 #' @param agent_vars covariates of the agent
+#' @return updated matrix of sub draws
 infect_neighbors_draws <- function(infector_state, 
                                    sub_agent_probs,
                                    susceptible_neighbors,

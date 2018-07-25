@@ -71,3 +71,35 @@ test_that("Testing the infect neighbors", {
     expect_equal(new_probs, expected_new_probs)
 
 })
+
+
+
+test_that("Testing run_AM_step", {
+    infector_state <- 2
+    sub_agent_probs <- matrix(c(0, 1, 0,
+                                1, 0, 0,
+                                0, 1, 0,
+                                0, 0, 1),
+                              byrow = TRUE, ncol = 3)
+    susceptible_neighbors <- 1:4
+    ## Everyone stays where infector is, which should hopefully be state 2
+    transmission_probs <- matrix(c(1, 0, 0,
+                                   0, 1, 0,
+                                   0, 0, 1),
+                                 byrow = TRUE, ncol = 3)
+    disease_params_list <- list(transmission_probs = transmission_probs,
+                                contact_probs = 1)
+    agent_vars <- NULL
+    expected_new_probs <- matrix(c(0, 1, 0,
+                                   0, 1, 0,
+                                   0, 1, 0,
+                                   0, 1, 0),
+                                 byrow = TRUE, ncol = 3)
+    new_probs <- infect_neighbors_draws(infector_state,
+                                        sub_agent_probs,
+                                        susceptible_neighbors,
+                                        disease_params_list,
+                                        agent_vars)
+    expect_equal(new_probs, expected_new_probs)
+
+})

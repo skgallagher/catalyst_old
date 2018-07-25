@@ -211,3 +211,86 @@ test_that("catalyst() works", {
 ##     }
 ## }
 ## mean(is_infected)
+
+
+test_that("catalyst() works (do_AM = TRUE)", {
+#################################################
+    ## Setting up multitude of variables
+################################################
+    ##
+
+###########################################
+###### AGENT_LIST#####################n
+######################################
+    init_CM_vals <- c(950, 50, 0)
+    N <- sum(init_CM_vals)
+    K <- 3
+    T <- 100
+    agent_list <- list(init_CM_vals = init_CM_vals,
+                       N = N,
+                       K = K,
+                       T = T)
+#########################################
+    ## ENVIRONMENT ######################
+#####################################
+    tab <- table(rep(1, N)) # We are all neighbors on this blessed day
+    env_list <- list()
+    env_list$init_env_table <- tab
+    env_list$E <- length(tab)
+    env_list$N <- N
+
+####################################
+    ## SIM LIST #################
+##########################
+    L <- 10
+    sim_list <- list(L = L, do_parallel = FALSE)
+####################################
+    
+######################################
+    ## DISEASE_PARAMS_LIST
+#######################################
+    params <- c(beta = .1, gamma = .03)
+    params_names <- c("beta", "gamma")
+    infection_states <- c(2) # I is the infection state
+    transmission_probs <- matrix(c(1, 0, 0,
+                                   0, 1, 0,
+                                   0, 0, 1),
+                                 byrow = TRUE, ncol = 3)
+    contact_probs = 1
+    disease_params_list <- list(K = K,
+                                infection_states = infection_states,
+                                init_vals = init_CM_vals,
+                                params = params,
+                                params_names = params_names,
+                                T = T,
+                                CM_fxn = SIR_fxn,
+                                transmission_probs = transmission_probs,
+                                contact_probs = contact_probs
+                                )
+########################################
+    ## OUTPUT_PARAMS_LIST #################
+##########################
+    output_params_list <- list(do_write = FALSE,
+                               save_sims = FALSE,
+                               results_dir = "~/test_catalyst_results",
+                               base_name = "sim_results",
+                               verbose = TRUE)
+    
+########################################
+    ## do_AM #################
+##########################
+    do_AM <- TRUE
+###################################
+    
+##########################################
+## Actually RUN CATALYST
+##########################
+    time <- proc.time()[3]
+    cam_output <- catalyst(agent_list, env_list,
+                     disease_params_list,
+                     sim_list,
+                     output_params_list,
+                     do_AM = FALSE)
+    proc.time()[3] - time
+    expect_equal(length(cam_output), L)
+})

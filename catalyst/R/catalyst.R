@@ -69,10 +69,11 @@ catalyst <- function(agent_list, env_list,
     
                     
     ## Set up neighbor dictionary/graph (best in CPP)
-    neighbhor_list <- initialize_neighbors(env_status, N, E)
+    neighbor_list <- initialize_neighbors(env_status, N, E)
     
     ## Run the program
     ## Need to run some sections in rcpp, inner loop the bette
+    print.verbose(output_params_list$verbose, paste("do_AM:", do_AM))
     catalyst_out <- run_cam(sim_list,
                             agent_status,
                             base_probs,
@@ -81,7 +82,7 @@ catalyst <- function(agent_list, env_list,
                             output_params_list,
                             disease_params_list,
                             agent_list,
-                            do_AM = FALSE)
+                            do_AM = do_AM)
     return(catalyst_out)
                              
 
