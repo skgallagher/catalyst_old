@@ -146,8 +146,12 @@ run_cam <- function(sim_list,
     }
 
     did_write <- write_output(cam_output,
-                              output_params_list, disease_params_list, CM)
-                 
+                              output_params_list,
+                              disease_params_list,
+                              sim_list,
+                              agent_list,
+                              env_list,
+                              do_AM)
     return(cam_output)
 
 

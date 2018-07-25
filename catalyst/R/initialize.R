@@ -105,8 +105,8 @@ initialize_probs <- function(disease_list, CM_fxn = SIR_fxn){
     ## TODO: unhardcode
 
     ## If not specified, probability from i to j is 0
-    probs_mat[, 1, 2] <-  params[1] * ode_results[1:T, 2] / N # S to I
-    probs_mat[, 1, 1] <- 1 - probs_mat[1:T, 1, 2] # S to S
+    probs_mat[, 1, 2] <-  params[1] * ode_results[1:T, 3] / N # S to I
+    probs_mat[, 1, 1] <- 1 - probs_mat[, 1, 2] # S to S
     probs_mat[, 2, 3] <- params[2] # I to R
     probs_mat[, 2, 2] <- 1 - params[2] # I to I
     probs_mat[, 3, 3] <- 1 # R to R

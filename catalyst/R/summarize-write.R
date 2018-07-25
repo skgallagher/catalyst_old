@@ -83,7 +83,7 @@ write_output <- function(output_list,
                          disease_params_list,
                          agent_list,
                          env_list,
-                         run_AM){
+                         do_AM){
 
     do_write <- output_params_list$do_write
     verbose <- output_params_list$verbose
@@ -117,7 +117,7 @@ write_output <- function(output_list,
                          disease_params_list = disease_params_list,
                          agent_list = agent_list,
                          env_list = env_list,
-                         run_AM = run_AM)
+                         do_AM = do_AM)
         print.verbose(verbose,
                       str = paste0("Writing run parameters to ", input_path))
         saveRDS(run_parameters, file.path(results_dir, input_path))

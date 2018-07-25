@@ -10,7 +10,7 @@ test_that("SIR works", {
     disease_list <- list(params = params,
                          T = T,
                          init_vals = init_vals)
-    do_plot <- FALSE
+    do_plot <- TRUE
     out <- integrate_CM(disease_list,
                         do_plot = do_plot)
     expect_true(TRUE)
