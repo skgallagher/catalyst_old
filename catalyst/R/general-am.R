@@ -66,14 +66,14 @@ run_AM_step <- function(tt, N, K,
             if(length(susceptible_neighbors) > 0){
                 agent_probs[susceptible_neighbors, ] <- infect_neighbors_draws(
                     current_agent_status[inf_ind],
-                    agent_probs[susceptible_neighbors, ],
+                    agent_probs[susceptible_neighbors, , drop = FALSE],
                     susceptible_neighbors,
                     disease_params_list,
                     agent_list$agent_vars
                 )
                 rolling_sus_inds <- update_susceptible_inds(
                     rolling_sus_inds,
-                    agent_probs[susceptible_neighbors, ],
+                    agent_probs[susceptible_neighbors, , drop = FALSE],
                     disease_params_list$infection_states,
                     susceptible_neighbors
                 )
@@ -86,7 +86,16 @@ run_AM_step <- function(tt, N, K,
             }
         }
         
-    }                                                           
+    } else {
+        ## If no infectious, all susceptibles will stay susceptible
+        infection_states <- disease_params_list$infection_states
+        ## Set probability of infection to 0, rescale other state changes
+        agent_probs[rolling_sus_inds, infection_states] <- 0
+        if(any(rowSums(agent_probs) == 0)) stop("0 probability of transfer")
+        agent_probs[rolling_sus_inds, ] <- agent_probs[rolling_sus_inds, ]  /
+            sum(agent_probs[rolling_sus_inds, ] )
+
+    }
     return(agent_probs)
     
 
@@ -165,13 +174,13 @@ infect_neighbors_draws <- function(infector_state,
                                    agent_vars){
 
     contact_probs <- disease_params_list$contact_probs
-    transmission_probs<- disease_params_list$transmission_probs
+    transmission_probs <- disease_params_list$transmission_probs
     ## First see if there is a contact
     successful_contacts <- rbinom(length(susceptible_neighbors), 1,
                                   contact_probs)
     contacted_inds <- which(successful_contacts > 0)
     ## Next transmit the disease
-    agent_probs <- transmission_probs[rep(infector_state, length(contacted_inds)), ]
+    agent_probs <- transmission_probs[rep(infector_state, length(contacted_inds)), , drop = FALSE]
     new_states <- draw_multinom(agent_probs, bounds = NULL,
                                 length(contacted_inds))
     ## Update the agent probailities, putting a 1 in the new state

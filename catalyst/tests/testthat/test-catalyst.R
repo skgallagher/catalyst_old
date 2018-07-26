@@ -199,18 +199,18 @@ test_that("catalyst() works", {
 
 
 ## Calculation for total transmission prob to individual transmission prob
-## x <- .4
-## N <- 2
-## y <- 1 - x^(1/N)
-## B <- 1000
-## is_infected <- integer(B)
-## for(bb in 1:B){
-##     z <- rbinom(N, 1, y)
-##     if(sum(z) ==  0){
-##         is_infected[bb] <- 1
-##     }
-## }
-## mean(is_infected)
+x <- .4
+N <- 10
+y <- 1 - (1-x)^(1/N)
+B <- 1000
+is_infected <- integer(B)
+for(bb in 1:B){
+    z <- rbinom(N, 1, y)
+    if(sum(z) >= 1){
+        is_infected[bb] <- 1
+    }
+}
+mean(is_infected)
 
 
 test_that("catalyst() works (do_AM = TRUE)", {
