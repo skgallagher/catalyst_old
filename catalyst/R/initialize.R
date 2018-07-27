@@ -33,7 +33,7 @@ initialize_env <- function(env_list, N, E){
     env_df <- df[rep((1:nrow(df))[df$Freq > 0],
                          times = df$Freq[df$Freq > 0]), 1:(ncol(df)-1), drop = FALSE]
     env_status <- as.matrix(env_df, drop = FALSE)
-    env_status <- apply(env_status, 2, as.numeric)
+    env_status <- apply(env_status, 2, function(x) as.numeric(x))
     return(env_status)
 }
 

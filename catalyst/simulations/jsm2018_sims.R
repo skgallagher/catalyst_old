@@ -207,7 +207,6 @@ library(ggplot2)
 library(reshape2)
 library(dplyr)
 library(latex2exp)
-devtools::load_all("~/simCAM")
 ##########################################
 ## Plot plot plot
 type <- ifelse(do_AM, "AM", "CM")
@@ -256,9 +255,9 @@ devtools::load_all("~/catalyst/catalyst")
 
 ########################################################3
 init_params <- c(beta=.5, gamma=.25)
-do_plug_in <- FALSE ## Run the ODE SIR
 disease_list <- list(params = init_params, params_names = NULL,
                      T = max(df$tt), init_vals = unlist(df[1, c("X1", "X2", "X3")]))
+do_plug_in <- TRUE ## Run the ODE SIR
 optim_pars <- optim(par = init_params,
                     fn = loglike_sir, data = df, disease_list = disease_list,
                     do_plug_in = do_plug_in)
