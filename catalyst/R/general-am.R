@@ -19,7 +19,6 @@
 #' "params_names" optional vector of parameter names
 #' T - total number of time steps, 0 to T-1 inclusive
 #' CM_fxn - the compartment model function
-#' CM_fxn - the compartment model function
 #' "transmission_probs" n_infectious_states x n_infection_states where entry ij is prob of agent in infectious state i agent to state j.  NOTE: n_infectious_states are those that CAN transmit the disease.  n_infection_states can include latently infectious individuals
 #' "contact_probs" probability of contact with another agent
 #' @param agent_list list with
@@ -48,6 +47,8 @@ run_AM_step <- function(tt, N, K,
     ## Modify agent_probs IF infected
     ## Remove SUSCEPTIBLE FROM INFECTION LIST?
 
+
+
     agent_probs <- base_to_agent_probs(current_base_probs,
                                     current_agent_status)
 
@@ -55,45 +56,46 @@ run_AM_step <- function(tt, N, K,
                                            disease_params_list$infection_states,
                                            disease_params_list$susceptible_states)
 
-    rolling_sus_inds <- current_states$susceptible_inds
-    if(length(current_states$infectious_inds) > 0){
-        for (inf_ind in current_states$infectious_inds){
-            neighbor_inds <- neighbor_list[[inf_ind]] # Neighbors
-            ## Find susceptible neighbors
-            ## TODO:  Could probably add to infection process
-            susceptible_neighbors <- intersect(rolling_sus_inds,
-                                               neighbor_inds)
-            if(length(susceptible_neighbors) > 0){
-                agent_probs[susceptible_neighbors, ] <- infect_neighbors_draws(
-                    current_agent_status[inf_ind],
-                    agent_probs[susceptible_neighbors, , drop = FALSE],
-                    susceptible_neighbors,
-                    disease_params_list,
-                    agent_list$agent_vars
-                )
-                rolling_sus_inds <- update_susceptible_inds(
-                    rolling_sus_inds,
-                    agent_probs[susceptible_neighbors, , drop = FALSE],
-                    disease_params_list$infection_states,
-                    susceptible_neighbors
-                )
+    sus_inds <- current_states$susceptible_inds
+    inf_inds <- current_states$infectious_inds
+    n_sus <- length(sus_inds)
+    n_inf <- length(inf_inds)
 
+    
+    if(n_sus > 0 & n_inf > 0){ # If there are both susceptibles and infectious left
+        ## Loop over susceptibles
+        for(sus_ind in sus_inds){
+            ## Find infectious neighbors
+            inf_nbr_inds <- intersect(inf_inds, neighbor_list[[sus_ind]])
+            current_sus_state <- current_agent_status[sus_ind]
+            if(length(inf_nbr_inds) > 0){
+                agent_probs[sus_ind, ] <- infect_susceptible_from_nbrs(tt,
+                                                                       current_agent_status,
+                                                                       inf_nbr_inds,
+                                                                       disease_params_list,
+                                                                       current_sus_state)
             } else {
-                break
+                ## Stay where you are/ move to another non-infection state
+                agent_probs[sus_ind, infection_states] <- 0
+                if(sum(agent_probs[sus_ind,]) == 0) stop("0 probability of transfer")
+                agent_probs[sus_ind, ] <- agent_probs[sus_ind, ] / sum(agent_probs[sus_ind, ])
             }
-            if(length(rolling_sus_inds) == 0){
-                break
-            }
+
+
         }
+       
         
-    } else {
-        ## If no infectious, all susceptibles will stay susceptible
+    } else if (n_sus == 0){ 
+        ## If no susceptible do nothing
+
+    } else { # If some susceptible, and no infectious
+        ## If no infectious or susceptible, then no chance of infection
         infection_states <- disease_params_list$infection_states
         ## Set probability of infection to 0, rescale other state changes
-        agent_probs[rolling_sus_inds, infection_states] <- 0
+        agent_probs[, infection_states] <- 0
         if(any(rowSums(agent_probs) == 0)) stop("0 probability of transfer")
-        agent_probs[rolling_sus_inds, ] <- agent_probs[rolling_sus_inds, ]  /
-            sum(agent_probs[rolling_sus_inds, ] )
+        agent_probs[sus_inds, ] <- agent_probs[sus_inds, ]  /
+            sum(agent_probs[sus_inds, ] )
 
     }
     return(agent_probs)
@@ -101,6 +103,70 @@ run_AM_step <- function(tt, N, K,
 
 
 }
+
+#' Infect a susceptible from infectious neigbhors
+#'
+#' @param tt current step
+#' @param current_agent_status integer vector of length N consisting of current status of agent
+#' @param inf_nbr_inds indices of infectious neighbors
+#' @param disease_params_list list including
+#' "K" the number of states
+#' "infection_states" the indices of the states that can infect others
+#' "init_vals" vector of size K that sums to N, initial values in each of the states at time t=0
+#' "params" vector of disease parameters (e.g. beta, gamma)
+#' "params_names" optional vector of parameter names
+#' T - total number of time steps, 0 to T-1 inclusive
+#' CM_fxn - the compartment model function
+#' CM_fxn - the compartment model function
+#' "transmission_probs" n_infectious_states x n_infection_states where entry ij is prob of agent in infectious state i agent to state j.  NOTE: n_infectious_states are those that CAN transmit the disease.  n_infection_states can include latently infectious individuals
+#' "contact_probs" probability of contact with another agent
+#' @param current_sus_state current susceptible state of individual
+#' @return vector of size K with a 1 in the new state of the susceptible agent and 0 elsewhere.  If the susceptible is not infected, he will stay in current state
+infect_susceptible_from_nbrs <- function(tt,
+                                         current_agent_status,
+                                         inf_nbr_inds,
+                                         disease_params_list,
+                                         current_sus_state){
+    ## TODO: make more general
+    ## Add in contact probabilities
+    successful_contacts <- rbinom(length(inf_nbr_inds), 1,
+                                  contact_probs)
+    ## Make agent probabilities
+    transmission_probs <- disease_params_list$transmission_probs[tt+1, ,]
+    infector_states <- current_agent_status[inf_nbr_inds[successful_contacts]]
+    agent_probs <- transmission_probs[infector_states, , drop = FALSE]
+    ## This gets infections individually
+    new_states <- draw_multinom(agent_probs, bounds = NULL,
+                                N = length(infector_states))
+    new_state <- determine_sus_infection(new_states, disease_params_list$infection_states,
+                                         current_sus_state)
+    agent_prob <- numeric(disease_params_list$K)
+    agent_prob[new_state] <- 1
+    return(agent_prob)
+ 
+
+
+}
+
+#' Determine if at least one infection occurred from infectious
+#'
+#' @param new_states vector of length of current successfully contacted infectious neighbors where the entry is the result of the infection of the neighbor onto the susceptible.  (e.g. for the SIR model, if the susceptible is infected, at least 1 entry will be 2 (for I).
+#' @param infection_states vector of possible infection states (e.g. for SIR I=2)
+#' @return a single integer indicating which state the susceptible agent is going to.
+determine_sus_infection <- function(new_states, infection_states,
+                                    current_sus_state){
+    infections <- new_states[new_states %in% infection_states]
+    if(length(infections) > 0){
+        ## Return the most common infection type
+        mode_infection <- as.numeric(names(sort(-table(infections)))[1])
+        return(mode_infection)
+    } else {
+        return(current_sus_state)
+    }
+
+
+}
+
 
 #' Get current infection/susceptible indices
 #'
@@ -119,80 +185,4 @@ get_agent_state_inds <- function(current_agent_status,
                 susceptible_inds = sus_states))
 
 
-}
-
-#' Update the rolling susceptible individuals
-#'
-#' @param rolling_sus_inds previous susceptible individual indices
-#' @param sub_agent_probs submatrix of agent_probs.  sub_agent_probs is a length(rolling_sus_neighbors) x K matrix where entry ij corresponds to prob of rolling_sus_neighbors[i] chance of moving to state j based on current state
-#' @param infection_states vector of infection indices
-#' @param susceptible_neighbors indices of susceptible neighbors from the ORIGINAL agent_probs
-#' @return a new vector of rolling sus_neighbors
-#' @details Shrink the susceptible list.  If infectious probs sum to 1, then this agent has been infected so we should take it off the susceptible list
-update_susceptible_inds <- function(rolling_sus_inds,
-                                    sub_agent_probs,
-                                    infection_states,
-                                    susceptible_neighbors){
-    inf_cum_prob <- rowSums(sub_agent_probs[, infection_states, drop = FALSE])
-    new_infections_inds <- susceptible_neighbors[which(inf_cum_prob >= (1 - 1e-10))]
-    if(length(new_infections_inds) > 0){
-        new_susceptible_inds <- setdiff(rolling_sus_inds,
-                                        new_infections_inds)
-    } else {
-        new_susceptible_inds <- rolling_sus_inds
-    }
-    
-    return(new_susceptible_inds)
-}
-
-
-
-#' Infect and transmit disease
-#'
-#' @param infector_state state the infector is currently in
-#' @param infection_states vector of infection state indices
-#' @param sub_agent_probs submatrix of agent_probs.  sub_agent_probs is a length(rolling_sus_neighbors) x K matrix where entry ij corresponds to prob of rolling_sus_neighbors[i] chance of moving to state j based on current state
-#' @param infection_states vector of infection indices
-#' @param susceptible_neighbors indices of susceptible neighbors from the ORIGINAL agent_probs
-#' @param disease_params_list list including
-#' "K" the number of states
-#' "infection_states" the indices of the states that can infect others
-#' "susceptible_states" the indices of the states that are susceptible
-#' "init_vals" vector of size K that sums to N, initial values in each of the states at time t=0
-#' "params" vector of disease parameters (e.g. beta, gamma)
-#' "params_names" optional vector of parameter names
-#' T - total number of time steps, 0 to T-1 inclusive
-#' CM_fxn - the compartment model function
-#' "transmission_probs" n_infectious_states x K where entry ij is prob of agent in infectious state i agent to state j.  NOTE: n_infectious_states are those that CAN transmit the disease.  
-#' "contact_probs" probability of contact with another agent
-#' @param agent_vars covariates of the agent
-#' @return updated matrix of sub draws
-infect_neighbors_draws <- function(infector_state, 
-                                   sub_agent_probs,
-                                   susceptible_neighbors,
-                                   disease_params_list,
-                                   agent_vars){
-
-    contact_probs <- disease_params_list$contact_probs
-    transmission_probs <- disease_params_list$transmission_probs
-    ## First see if there is a contact
-    successful_contacts <- rbinom(length(susceptible_neighbors), 1,
-                                  contact_probs)
-    contacted_inds <- which(successful_contacts > 0)
-    ## Next transmit the disease
-    agent_probs <- transmission_probs[rep(infector_state, length(contacted_inds)), , drop = FALSE]
-    new_states <- draw_multinom(agent_probs, bounds = NULL,
-                                length(contacted_inds))
-    ## Update the agent probailities, putting a 1 in the new state
-    updated_sub_agent_probs <- matrix(0, nrow = nrow(sub_agent_probs),
-                                      ncol = ncol(sub_agent_probs))
-    for(jj in 1:length(new_states)){
-        agent_index <- contacted_inds[jj]
-        updated_sub_agent_probs[agent_index,
-                                new_states[jj]] <- 1
-    }
-                                      
-                                  
-
-    return(updated_sub_agent_probs)
 }

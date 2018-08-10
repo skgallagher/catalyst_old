@@ -198,19 +198,19 @@ test_that("catalyst() works", {
 
 
 
-## Calculation for total transmission prob to individual transmission prob
-x <- .4
-N <- 10
-y <- 1 - (1-x)^(1/N)
-B <- 1000
-is_infected <- integer(B)
-for(bb in 1:B){
-    z <- rbinom(N, 1, y)
-    if(sum(z) >= 1){
-        is_infected[bb] <- 1
-    }
-}
-mean(is_infected)
+## ## Calculation for total transmission prob to individual transmission prob
+## x <- .4
+## N <- 10
+## y <- 1 - (1-x)^(1/N)
+## B <- 1000
+## is_infected <- integer(B)
+## for(bb in 1:B){
+##     z <- rbinom(N, 1, y)
+##     if(sum(z) >= 1){
+##         is_infected[bb] <- 1
+##     }
+## }
+## mean(is_infected)
 
 
 test_that("catalyst() works (do_AM = TRUE)", {
@@ -253,10 +253,12 @@ test_that("catalyst() works (do_AM = TRUE)", {
     params_names <- c("beta", "gamma")
     infection_states <- c(2) # I is the infection state
     susceptible_states <- c(1) # S is the susceptible state
-    transmission_probs <- matrix(c(1, 0, 0,
-                                   0, 1, 0,
-                                   0, 0, 1),
-                                 byrow = TRUE, ncol = 3)
+    probs <- matrix(c(1, 0, 0,
+                      0, 1, 0,
+                      0, 0, 1),
+                    byrow = TRUE, ncol = 3)
+    transmission_probs <- array(0, dim = c(T, 3, 3))
+    transmission_probs[1:T,,] <- probs
     contact_probs = 1
     disease_params_list <- list(K = K,
                                 infection_states = infection_states,

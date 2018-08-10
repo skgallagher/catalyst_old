@@ -112,7 +112,7 @@ test_that("Write out output", {
                                                "disease_params_list",
                                                "agent_list",
                                                "env_list",
-                                               "run_AM")))
+                                               "do_AM")))
     unlink(output_params_list$results_dir, recursive = TRUE)
     
     
