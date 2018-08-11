@@ -59,11 +59,7 @@ params_names <- c("beta", "gamma")
 infection_states <- c(2) # I is the infection state
 susceptible_states <- c(1) # S is the susceptible state
 ## Probability of individual transmission
-prob_ind_trans <- 1 - (1 - beta)^(1/N)
-transmission_probs <- matrix(c(1, 0, 0,
-                               1 - prob_ind_trans, prob_ind_trans, 0,
-                               0, 0, 1),
-                             byrow = TRUE, ncol = 3)
+transmission_probs <- NULL
 contact_probs = 1
 disease_params_list <- list(K = K,
                             infection_states = infection_states,
@@ -74,5 +70,11 @@ disease_params_list <- list(K = K,
                             T = 30,
                             CM_fxn = SIR_fxn,
                             transmission_probs = transmission_probs,
-                            contact_probs = contact_probs
+                            contact_probs = contact_probs,
+                            do_plugin_probs = FALSE
                             )
+base_probs <- initialize_probs(disease_params_list, SIR_fxn)
+transmission_probs <- make_transmission_probs_SIR(beta, N, base_probs)
+contact_probs = 1
+disease_params_list$transmission_probs = transmission_probs
+

@@ -1,7 +1,4 @@
 
-
-
-
 ### Differing homogeneity, even split
 ########################################
 ## OUTPUT_PARAMS_LIST #################
@@ -51,7 +48,7 @@ df_AM <- read.csv(paste0("jsm2018_sims/",
 g_AM <- plot_sir(df_AM)
 g_AM
 
-library(gridExtra)
+
 
 
 ######################################
@@ -79,6 +76,7 @@ output_params_list <- list(do_write = TRUE,
                            base_name = base_name,
                            verbose = TRUE)
 disease_params_list$params <- optim_pars_AM$par
+disease_params_list$do_plugin_probs <- TRUE ## should get wider var
 
 ### RUN
 ##########################################
@@ -116,16 +114,18 @@ optim_pars_CM <- optim(par = init_params,
                     do_plug_in = do_plug_in)
 ## optim_pars
 
+rbind(optim_pars_AM$par, optim_pars_CM$par)
+
 
 ## get log likes!
 
-library(plyr)
+library(plyr)library(plyr)
 loglike_AM <- ddply(.data = df_AM, .var = c("ll"),
                           .fun = function(df){
                               loglike_sir(
-                                  params = optim_pars_AM$par,
+                                  params = optim_pars_CM$par,
                                   data = df,
-                                  disease_list = disease_list_CM,
+                                  disease_list = disease_list_AM,
                                   do_plug_in = do_plug_in
                               )
                           })
@@ -133,37 +133,31 @@ loglike_AM <- ddply(.data = df_AM, .var = c("ll"),
 loglike_CM <- ddply(.data = df_CM, .var = c("ll"),
                           .fun = function(df){
                               loglike_sir(
-                                  params = optim_pars_AM$par,
+                                  params = optim_pars_CM$par,
                                   data = df,
-                                  disease_list = disease_list_CM,
+                                  disease_list = disease_list_AM,
                                   do_plug_in = do_plug_in
                               )
                           })
                           
-par(mfrow=c(2,1))
-hist(loglike_AM$V1)
-hist(loglike_CM$V1)
 
-cols <- c("midnightblue", "orange1")
+## Plot
+cols <- c("cornflowerblue", "orange1")
 df_ll <- data.frame(Simulation = loglike_AM$ll,
                     loglike_AM = loglike_AM$V1,
                     loglike_CM = loglike_CM$V1)
 df_ll_melt <- melt(df_ll, id.vars = "Simulation")
-mu <- ddply(df_ll_melt, "variable", summarize, type_mean = mean(-value))
-g_hist <- ggplot(df_ll_melt, aes(x = -value, fill=variable)) +
-    geom_histogram(position = "identity", alpha = .5) + my_theme() +
+g_de <- ggplot(df_ll_melt, aes(x = -value, col=variable)) +
+    geom_density(size =2) + 
     labs(x = "Log Likelihood", y = "Count",
-         title = TeX(sprintf("Histograms of Log Likelihoods: $x=\\sqrt{N}$, $y=\\sqrt{N}$")),
-         subtitle = latex2exp::TeX(sprintf("%d individuals; %d runs; $\\beta = %.2f$; $\\gamma = %.2f$; Prob. Transmission =  $1-(1-\\beta)^{1/N}$",   N, L, disease_list_AM$params[1],
+         title = TeX(sprintf("Density Estimates of Log Likelihoods: $x=\\sqrt{N}/4$, $y=\\sqrt{N}/3$")),
+         subtitle = latex2exp::TeX(sprintf("%d individuals; %d runs; $\\beta = %.2f$; $\\gamma = %.2f$; Prob. Transmission =  $1-(1-\\beta)^{1/X_2}$",   N, L, disease_list_AM$params[1],
                                            disease_list_AM$params[2]))) +
-    ggplot2::scale_fill_manual(values = cols, name = "Type",  labels = c("AM", "CM"))+
-    geom_vline(data = mu, aes(xintercept = type_mean, color=variable, group = variable),
-               linetype="dashed") +
-    ggplot2::scale_color_manual(values = cols) + guides(color = FALSE) +
-    theme(legend.position="bottom")
-g_hist
-file_name <- paste0("loglike_hist_x-", round(10 * x / sqrt(N)),
-                    "_y-", round(10 * y / sqrt(N)),
-                    ".pdf")
+    geom_rug(aes(y=0)) + 
+    ggplot2::scale_colour_manual(values = cols, name = "Type", labels = c("AM", "CM"))+
+    my_theme() +     theme(legend.position="bottom") + xlim(-200, -140)
+g_de
+
+file_name <- paste0("loglike_de_x-", "het-middle", ".pdf")
 ggsave(file.path("../plots/", file_name),
        width = 9, height=10)    

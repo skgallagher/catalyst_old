@@ -21,7 +21,7 @@ plot_sir <- function(df, do_save = FALSE){
                   upper = quantile(value, .95),
                   lower = quantile(value, .05))
 #################################
-    g <- ggplot(data = df_melt2, aes(x = tt)) + geom_line(aes(y = mu, col = variable)) + 
+    g <- ggplot(data = df_melt2, aes(x = tt)) + geom_line(aes(y = mu, col = variable), size = 1) + 
         labs(x = "Time", y = "# Individuals",
              title = paste0(type, " - Homogeneous Neighborhood"),
              subtitle = latex2exp::TeX(sprintf("%d individuals; %d runs; $\\beta = %.2f$; $\\gamma = %.2f$",
@@ -31,7 +31,10 @@ plot_sir <- function(df, do_save = FALSE){
                     alpha = .4) + 
         ggplot2::scale_color_manual(values = cols,
                                     labels = legend_names_tex, name = "State") +
-        ggplot2::scale_fill_manual(values = cols) + guides(fill = FALSE) + 
+        ggplot2::scale_fill_manual(values = cols,
+                                   labels = legend_names_tex, name = "95% CI")  +
+        guides(color = guide_legend(order = 1, override.aes = list(size = 2)),
+               fill = guide_legend(order = 2)) + 
         my_theme()
 
     if(do_save)

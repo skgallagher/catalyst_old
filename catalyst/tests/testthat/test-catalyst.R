@@ -192,6 +192,26 @@ test_that("catalyst() works", {
                      do_AM = FALSE)
     proc.time()[3] - time
     expect_equal(length(cam_output), L)
+
+#########################
+    ## Try with plugin = TRUE
+########################
+    disease_params_list$do_plugin_probs <- TRUE
+    base_probs <- initialize_probs(disease_params_list, SIR_fxn)
+    ##########################################
+## Actually RUN CATALYST
+##########################
+    time <- proc.time()[3]
+    cam_output <- catalyst(agent_list, env_list,
+                     disease_params_list,
+                     sim_list,
+                     output_params_list,
+                     do_AM = FALSE)
+    proc.time()[3] - time
+    expect_equal(length(cam_output), L)
+
+    
+    
 })
 
 

@@ -21,6 +21,7 @@
 #' CM_fxn - the compartment model function
 #' "transmission_probs" n_infectious_states x n_infection_states where entry ij is prob of agent in infectious state i agent to state j.  NOTE: n_infectious_states are those that CAN transmit the disease.  n_infection_states can include latently infectious individuals
 #' "contact_probs" probability of contact with another agent
+#' "do_plugin_probs" logical.  Should we dynamically update probabilities based on previous results of simulation?  See details.
 #' @param agent_list list with
 #' "init_CM_vals" vector of size K where entry k is the size of state k at time 0. 
 #' "N" number of total agents
@@ -49,8 +50,6 @@ run_AM_step <- function(tt, N, K,
 
 
 
-    agent_probs <- base_to_agent_probs(current_base_probs,
-                                    current_agent_status)
 
     current_states <- get_agent_state_inds(current_agent_status,
                                            disease_params_list$infection_states,
@@ -61,6 +60,20 @@ run_AM_step <- function(tt, N, K,
     n_sus <- length(sus_inds)
     n_inf <- length(inf_inds)
 
+
+    if(is.null(disease_params_list$do_plugin_probs)){ ## So all my tests don't break
+        disease_params_list$do_plugin_probs <- FALSE
+    }
+    if(disease_params_list$do_plugin_probs){ # Should reduce variability of AM.  See document for more details
+        disease_params_list$transmission[tt+1,, ] <- update_transmission_probs_SIR(
+            disease_params_list$transmission[tt+1,, ],
+            current_states,
+            disease_params_list)
+    }
+    
+    agent_probs <- base_to_agent_probs(current_base_probs,
+                                           current_agent_status)
+    
     
     if(n_sus > 0 & n_inf > 0){ # If there are both susceptibles and infectious left
         ## Loop over susceptibles

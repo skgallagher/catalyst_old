@@ -212,6 +212,17 @@ run_cam_inner <- function(ll, agent_status,
         } else{
             ## TODO: This can be improved in memory and probably time to update CMs
             agent_probs <- NULL
+            if(is.null(disease_params_list$do_plugin_probs)){
+                disease_params_list$do_plugin_probs <- FALSE
+            }
+            if(disease_params_list$do_plugin_probs){ # Should increase variance.  In Binomial update, I -> \hat{I}
+
+                base_probs[tt+1,,] <- update_base_probs_SIR(
+                    base_probs[tt+1, , ],
+                    disease_params_list,
+                    agent_status[tt+1, ]
+                )
+            }
         }
         ## Update agents based on agent probabilities
         agent_status[tt + 2, ] <- update_agents(agent_probs,
