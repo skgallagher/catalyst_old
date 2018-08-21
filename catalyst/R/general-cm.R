@@ -89,11 +89,16 @@ make_CM_fxn <- function(disease_list, N, K){
 }
 
 
+#' Wrapper for SIR
+#'
+#' @param t time step
+#' @param state vector of possibly named variables (e.g. X1, X2, or X3) (S, I, R)
+#' @param params vector of possibly named disease parameters (e.g. beta or gamma)
 SIR_fxn <- function(t, state, params){
     N <- sum(state)
     with(as.list(c(state, params)), {
-        dX1 <- -params[1] * state[1] * state[2] / N
-        dX3 <- params[2] * state[2]
+        dX1 <- -params[1] * state[1] * state[2] / N # - betaIS/N
+        dX3 <- params[2] * state[2] # gamma I
         dX2 <- -dX1 - dX3
         list(c(dX1, dX2, dX3))
     })

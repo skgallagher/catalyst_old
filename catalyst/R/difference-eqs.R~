@@ -1,0 +1,12 @@
+## SKG
+## August 21, 2018
+
+
+eval_difference_eqs <- function(params,
+                                init_vals,
+                                D,
+                                times,
+                                do_plot = FALSE,
+                                params_names = NULL){
+
+    }

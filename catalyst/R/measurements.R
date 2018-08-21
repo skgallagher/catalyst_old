@@ -2,6 +2,10 @@
 ## MLE and LSE of beta/gamma for SIR
 
 
+#' Format data to add differences between states from one time to the next
+#' 
+#' @param data data frame of OBSERVED time, X1, X2, and X3 values
+#' @return new_data with differences and lagged values at each time step
 get_SIR_diffs <- function(data){
     ## Return X1, X2, X3 diffs and previous values
     sub_df <- plyr::ddply(.data = data, .variables = c("ll"),
@@ -20,12 +24,22 @@ get_SIR_diffs <- function(data){
 }
                           
 
+#' Format SIR data to use in likelihood
+#'
+#' @param params beta and gamma
+#' @param new_data SIR data with obs_X1, obs_X2, and obs_X3 values, which are lagged differences
+#' @param disease_list list with parameters
+#' "params" - a numeric list of disease parameters (e.g. .1, .03)
+#' "params_names" - optional variable names of params (e.g. beta, gamma)
+#' "T" - max time.  The steps we take are 0, 1, ..., T inclusive
+#' "init_vals" - vector of initial values of the states.  Must be nonnegative.  Length of vector is K, the number of states, and sum of values is N the constant number of individuals
+#' @param do_plug_in whether to use theoretical or observed SIR values in probability of transition in likelihood
 get_SIR_lags <- function(params,
                          new_data,
                          disease_list,
                          do_plug_in = TRUE){
     if(!do_plug_in){
-        ## USE observed SIR values in like
+        ## USE theoretical SIR values in like
 
         ode_results <- integrate_CM(disease_list, CM_fxn = SIR_fxn,
                                     step = 1, do_plot = FALSE)
@@ -46,6 +60,17 @@ get_SIR_lags <- function(params,
 }
 
 
+#' Estimate negative log like from SIR
+#'
+#' @param params vector of parameters (e.g. beta, gamma)
+#' @param data data frame of OBSERVED time, X1, X2, and X3 values
+#' @param disease_list list with parameters
+#' "params" - a numeric list of disease parameters (e.g. .1, .03)
+#' "params_names" - optional variable names of params (e.g. beta, gamma)
+#' "T" - max time.  The steps we take are 0, 1, ..., T inclusive
+#' "init_vals" - vector of initial values of the states.  Must be nonnegative.  Length of vector is K, the number of states, and sum of values is N the constant number of individuals
+#' @param do_plug_in whether to use theoretical or observed SIR values in probability of transition in likelihood
+#' @return negative log likelihood of SIR given the data
 loglike_sir <- function(params,
                         data,
                         disease_list = NULL,
