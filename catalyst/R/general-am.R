@@ -76,7 +76,7 @@ run_AM_step <- function(tt, N, K,
     
     
     if(n_sus > 0 & n_inf > 0){ # If there are both susceptibles and infectious left
-        ## Loop over susceptibles
+        ## Loop over susceptsibles
         for(sus_ind in sus_inds){
             ## Find infectious neighbors
             inf_nbr_inds <- intersect(inf_inds, neighbor_list[[sus_ind]])
@@ -102,7 +102,6 @@ run_AM_step <- function(tt, N, K,
         ## If no susceptible do nothing
 
     } else { # If some susceptible, and no infectious
-        ## If no infectious or susceptible, then no chance of infection
         infection_states <- disease_params_list$infection_states
         ## Set probability of infection to 0, rescale other state changes
         agent_probs[, infection_states] <- 0

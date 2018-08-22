@@ -74,6 +74,8 @@ catalyst <- function(agent_list, env_list,
     ## Run the program
     ## Need to run some sections in rcpp, inner loop the bette
     print.verbose(output_params_list$verbose, paste("do_AM:", do_AM))
+    print.verbose(output_params_list$verbose, paste("do_plugin_probs: ",
+                                                    disease_params_list$do_plugin_probs))
     catalyst_out <- run_cam(sim_list,
                             agent_status,
                             base_probs,

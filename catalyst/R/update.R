@@ -112,12 +112,13 @@ update_transmission_probs_SIR <- function(current_transmission_probs,
                                           current_states,
                                           disease_params_list){
     N <- sum(disease_params_list$init_vals)
-    I <- length(current_states$infectious_inds) 
+    I <- length(current_states$infectious_inds)  # THIS is hat(I), observed value not theoretical
     p <- I * disease_params_list$params[1] / N # marginal probability of infection for a given sus
+    ## p <- current_transmission_probs[2, 2]  # non-plug-in values
     prob_of_transmission <- 1 - (1 - p) ^ ( 1 / I )
 
     current_transmission_probs[2,2] <- prob_of_transmission
-    current_transmission_probs[2,2] <-  1 - prob_of_transmission
+    current_transmission_probs[2,1] <-  1 - prob_of_transmission
     
     return(current_transmission_probs)
 }

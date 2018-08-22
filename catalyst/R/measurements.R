@@ -10,9 +10,9 @@ get_SIR_diffs <- function(data){
     ## Return X1, X2, X3 diffs and previous values
     sub_df <- plyr::ddply(.data = data, .variables = c("ll"),
                           .fun =  function(x){
-                              obs_X1 <- c(lag(x$X1, 1))
-                              obs_X2 <- c(lag(x$X2, 1))
-                              obs_X3 <- c(lag(x$X3, 1))
+                              obs_X1 <- c(dplyr::lag(x$X1, 1))
+                              obs_X2 <- c(dplyr::lag(x$X2, 1))
+                              obs_X3 <- c(dplyr::lag(x$X3, 1))
                               return(data.frame(obs_X1= obs_X1,
                                                 obs_X2 = obs_X2,
                                                 obs_X3 = obs_X3))
@@ -40,7 +40,7 @@ get_SIR_lags <- function(params,
                          do_plug_in = TRUE){
     if(!do_plug_in){
         ## USE theoretical SIR values in like
-
+        disease_list$params <- params
         ode_results <- integrate_CM(disease_list, CM_fxn = SIR_fxn,
                                     step = 1, do_plot = FALSE)
         ode_results <- as.data.frame(ode_results)
