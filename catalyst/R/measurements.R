@@ -32,6 +32,7 @@ get_SIR_diffs <- function(data){
 #' "params" - a numeric list of disease parameters (e.g. .1, .03)
 #' "params_names" - optional variable names of params (e.g. beta, gamma)
 #' "T" - max time.  The steps we take are 0, 1, ..., T inclusive
+#' "times" - all times
 #' "init_vals" - vector of initial values of the states.  Must be nonnegative.  Length of vector is K, the number of states, and sum of values is N the constant number of individuals
 #' @param do_plug_in whether to use theoretical or observed SIR values in probability of transition in likelihood
 get_SIR_lags <- function(params,
@@ -41,7 +42,7 @@ get_SIR_lags <- function(params,
     if(!do_plug_in){
         ## USE theoretical SIR values in like
         disease_list$params <- params
-        ode_results <- integrate_CM(disease_list, CM_fxn = SIR_fxn,
+        ode_results <- sum_CM(disease_list, CM_fxn = SIR_fxn,
                                     step = 1, do_plot = FALSE)
         ode_results <- as.data.frame(ode_results)
         ode_results$tt <- ode_results$t + 1

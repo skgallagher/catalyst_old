@@ -98,8 +98,9 @@ test_that("Initialize probabilities is working correctly", {
     params <- c(.1, .03)
     T <- 100
     init_vals <- c(950, 50, 0)
-    CM_fxn = SIR_fxn
+    CM_fxn = SIR_diff
     disease_list <- list(params = params,
+                         times = 0:T,
                          T = T,
                          init_vals = init_vals,
                          CM_fxn = CM_fxn)

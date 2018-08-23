@@ -39,13 +39,15 @@ test_that("Testing the infect susceptible from neighbors", {
     disease_params_list$infection_states <- 2
     disease_params_list$susceptible_states <- 1
     disease_params_list$T <- T
+    disease_params_list$times <- 0:T
     beta <- .5
     gamma <- .25
     params <- c(beta = beta, gamma = gamma)
     disease_params_list$params <- params
     disease_params_list$init_vals <- init_CM_vals
-    base_probs <- initialize_probs(disease_params_list, SIR_fxn)
+    base_probs <- initialize_probs(disease_params_list, SIR_diff)
     disease_params_list$transmission_probs <- make_transmission_probs_SIR(beta, N, base_probs)
+    disease_params_list$contact_probs <- 1
 
     ## infect_sus_from_nbrs
     infection_states <- 2

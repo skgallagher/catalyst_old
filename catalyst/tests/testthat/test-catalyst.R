@@ -28,7 +28,8 @@ test_that("Setting everything up",{
                          params = params,
                          params_names = params_names,
                          T = T,
-                         CM_fxn = SIR_fxn)
+                         times = 0:T,
+                         CM_fxn = SIR_diff)
     sim_list <- list(L = L)
     run_AM <- FALSE
     output_params_list <- list(do_write = FALSE,
@@ -38,7 +39,7 @@ test_that("Setting everything up",{
     neighbor_list <- initialize_neighbors(env_list$env_status,
                                           env_list$N,
                                           env_list$E)
-    base_probs <- initialize_probs(disease_params_list, CM_fxn)
+    base_probs <- initialize_probs(disease_params_list, SIR_diff)
                                
     ## base to agent_probs
 
@@ -84,7 +85,8 @@ test_that("run_cam_inner() is working", {
                          params = params,
                          params_names = params_names,
                          T = T,
-                         CM_fxn = SIR_fxn)
+                         times = 0:T,
+                         CM_fxn = SIR_diff)
     sim_list <- list(L = L)
     run_AM <- FALSE
     output_params_list <- list(do_write = FALSE,
@@ -95,7 +97,7 @@ test_that("run_cam_inner() is working", {
     neighbor_list <- initialize_neighbors(env_list$env_status,
                                           env_list$N,
                                           env_list$E)
-    base_probs <- initialize_probs(disease_params_list, CM_fxn)
+    base_probs <- initialize_probs(disease_params_list, SIR_diff)
     agent_probs <- NULL
     do_AM <- FALSE
 ##########################################
@@ -165,7 +167,8 @@ test_that("catalyst() works", {
                                 params = params,
                                 params_names = params_names,
                                 T = T,
-                                CM_fxn = SIR_fxn)
+                                times = 0:T,
+                                CM_fxn = SIR_diff)
 ########################################
     ## OUTPUT_PARAMS_LIST #################
 ##########################
@@ -197,7 +200,7 @@ test_that("catalyst() works", {
     ## Try with plugin = TRUE
 ########################
     disease_params_list$do_plugin_probs <- TRUE
-    base_probs <- initialize_probs(disease_params_list, SIR_fxn)
+    base_probs <- initialize_probs(disease_params_list, SIR_diff)
     ##########################################
 ## Actually RUN CATALYST
 ##########################
@@ -287,7 +290,8 @@ test_that("catalyst() works (do_AM = TRUE)", {
                                 params = params,
                                 params_names = params_names,
                                 T = T,
-                                CM_fxn = SIR_fxn,
+                                times = 0:T,
+                                CM_fxn = SIR_diff,
                                 transmission_probs = transmission_probs,
                                 contact_probs = contact_probs
                                 )

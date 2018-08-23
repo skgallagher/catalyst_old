@@ -55,6 +55,7 @@ eval_difference_eqs <- function(params = c(.5, .25),
                                 params_names = NULL,
                                 do_plot = FALSE,
                                 ...){
+
     times_sorted <- sort(times)
     T <- max(times_sorted)
     K <- length(init_vals)

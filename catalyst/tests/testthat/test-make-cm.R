@@ -9,9 +9,10 @@ test_that("SIR works", {
     init_vals <- c(950, 50, 0)
     disease_list <- list(params = params,
                          T = T,
+                         times = 0:T,
                          init_vals = init_vals)
-    do_plot <- TRUE
-    out <- integrate_CM(disease_list,
+    do_plot <- FALSE
+    out <- sum_CM(disease_list,
                         do_plot = do_plot)
     expect_true(TRUE)
         

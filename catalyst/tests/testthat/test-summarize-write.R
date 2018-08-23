@@ -51,9 +51,10 @@ test_that("Write out output", {
     disease_params_list <- list(K = 3, init_vals = c(3, 1, 0),
                                 params = c(beta = 1, gamma = 1),
                                 T = 3, infection_states = c(2),
-                                CM_fxn = SIR_fxn)
+                                CM_fxn = SIR_diff,
+                                times = 0:T)
     base_probs <- initialize_probs(disease_params_list,
-                                   SIR_fxn)
+                                   SIR_diff)
 
 
     ###########################

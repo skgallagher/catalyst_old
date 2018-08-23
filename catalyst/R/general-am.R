@@ -142,7 +142,7 @@ infect_susceptible_from_nbrs <- function(tt,
     ## TODO: make more general
     ## Add in contact probabilities
     successful_contacts <- rbinom(length(inf_nbr_inds), 1,
-                                  contact_probs)
+                                  disease_params_list$contact_probs)
     ## Make agent probabilities
     transmission_probs <- disease_params_list$transmission_probs[tt+1, ,]
     infector_states <- current_agent_status[inf_nbr_inds[successful_contacts]]

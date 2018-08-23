@@ -83,7 +83,7 @@ plot_ode_base <- function(ode_results, state, params, ...){
 #' @return a function to use in ode45 from diffeq package
 #' @details Currently hardcoded for SIR only
 make_CM_fxn <- function(disease_list, N, K){
-    CM_fxn <- SIR_fxn
+    CM_fxn <- SIR_diff
     return(CM_fxn)
 
 }

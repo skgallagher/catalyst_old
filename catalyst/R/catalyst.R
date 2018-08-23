@@ -52,6 +52,7 @@ catalyst <- function(agent_list, env_list,
     
     ## Initialize Agents
     ## Move to RCPP
+
     agent_status <- initialize_agents(agent_list$init_CM_vals,
                                       N, K, T)
     

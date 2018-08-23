@@ -9,6 +9,7 @@
 #' @param T max time, integer value
 #' @return  (T+1) x N matrix of agent status with the first row (t=0) filled in with statuses corresponding to the init CM vals.  The other states are zero
 initialize_agents <- function(init_CM_vals, N, K, T){
+    
     agent_status <- matrix(0, nrow = (T + 1), ncol = N)
     if(sum(init_CM_vals) != N) stop("The initial CM values do not sum to N")
     if(length(init_CM_vals) != K) stop("There must be K initial values")
@@ -88,7 +89,7 @@ initialize_neighbors <- function(env_status, N, E){
 #' @param CM_fxn output of make_CM_fxn
 #' @return T x K x K matrix where entry t, i, j is the probability of an agent in compartment i transitioning to state j from time t-1 to t (because we start at 0)
 #' @details TODO: currently hardcoded for SIR. Need to make general
-initialize_probs <- function(disease_list, CM_fxn = SIR_fxn){
+initialize_probs <- function(disease_list, CM_fxn = SIR_diff){
     T <- disease_list$T
     K <- length(disease_list$init)
     N <- sum(disease_list$init)
@@ -99,7 +100,7 @@ initialize_probs <- function(disease_list, CM_fxn = SIR_fxn){
     probs_mat <- array(0, c(T, K, K))
 
     ## Get ode_results
-    ode_results <- integrate_CM(disease_list, CM_fxn = CM_fxn)
+    ode_results <- sum_CM(disease_list, CM_fxn = CM_fxn)
     
 
     ## TODO: unhardcode
