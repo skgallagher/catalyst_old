@@ -51,8 +51,10 @@ ggsave(file.path("../plots/", file_name),
 ######################################
 init_params <- c(beta=.5, gamma=.25)
 disease_list_AM <- list(params = init_params, params_names = NULL,
-                     T = max(df_AM$tt), init_vals = unlist(df_AM[1, c("X1", "X2", "X3")]))
-do_plug_in <- TRUE ## Do run the ODE SIR
+                        T = max(df_AM$tt), init_vals = unlist(df_AM[1, c("X1", "X2", "X3")]),
+                        times = 0:max(df_AM$tt),
+                        CM_fxn = SIR_diff)
+do_plug_in <- FALSE ## Do run the ODE SIR
 optim_pars_AM <- optim(par = init_params,
                     fn = loglike_sir, data = df_AM, disease_list = disease_list_AM,
                     do_plug_in = do_plug_in)

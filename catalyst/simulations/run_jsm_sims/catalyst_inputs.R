@@ -61,19 +61,21 @@ susceptible_states <- c(1) # S is the susceptible state
 ## Probability of individual transmission
 transmission_probs <- NULL
 contact_probs = 1
+T <- 30
 disease_params_list <- list(K = K,
                             infection_states = infection_states,
                             susceptible_states = susceptible_states,
                             init_vals = init_CM_vals,
                             params = params,
                             params_names = params_names,
-                            T = 30,
-                            CM_fxn = SIR_fxn,
+                            T = T,
+                            times = 0:T,
+                            CM_fxn = SIR_diff,
                             transmission_probs = transmission_probs,
                             contact_probs = contact_probs,
                             do_plugin_probs = FALSE
                             )
-base_probs <- initialize_probs(disease_params_list, SIR_fxn)
+base_probs <- initialize_probs(disease_params_list, SIR_diff)
 transmission_probs <- make_transmission_probs_SIR(beta, N, base_probs)
 contact_probs = 1
 disease_params_list$transmission_probs = transmission_probs

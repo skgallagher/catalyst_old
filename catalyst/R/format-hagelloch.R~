@@ -1,0 +1,6 @@
+
+#' Make an agent data frame from a data frame with 
+make_agent_data <- function(df, state_names, actual_names, dates_to_T = TRUE){
+
+
+    }

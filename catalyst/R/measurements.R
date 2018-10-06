@@ -42,7 +42,7 @@ get_SIR_lags <- function(params,
     if(!do_plug_in){
         ## USE theoretical SIR values in like
         disease_list$params <- params
-        ode_results <- sum_CM(disease_list, CM_fxn = SIR_fxn,
+        ode_results <- sum_CM(disease_list, CM_fxn = SIR_diff, # hard coded
                                     step = 1, do_plot = FALSE)
         ode_results <- as.data.frame(ode_results)
         ode_results$tt <- ode_results$t + 1
