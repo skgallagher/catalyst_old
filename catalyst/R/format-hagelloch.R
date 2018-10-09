@@ -22,6 +22,7 @@ make_agent_data <- function(df, state_names = c("S", "I", "R"), df_names = c("S"
 #' @param df_names corresponding column names to find times of status
 #' @param state_levels corresponding number to df_names
 #' @param vec_length how long is vector
+#' @return turn SIR data for hagelloch into agent formulation
 extract_times <- function(row, df_names, state_levels, vec_length){
     vec <- integer(vec_length)
     init_date <- as.numeric(row[df_names[2]]) 
@@ -47,6 +48,7 @@ extract_times <- function(row, df_names, state_levels, vec_length){
 #'
 #' @param df based on hagelloch.df from library(surveillance)
 #' @param env_vars which variables to use as neighborhood
+#' @return a  N x E matrix where entry ne is the assignment of environment e for agent n
 extract_agent_envs <- function(df, env_vars){
     env <- df %>% select(env_vars) %>% dplyr::mutate_at(vars(env_vars), as.integer) %>%
         dplyr::mutate_at(vars(env_vars), funs(replace(., is.na(.), 0)))
