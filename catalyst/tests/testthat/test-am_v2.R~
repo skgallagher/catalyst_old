@@ -1,0 +1,8 @@
+context("Agent interactions for v2")
+
+
+testthat("rescale agent prob",{
+
+
+
+    })

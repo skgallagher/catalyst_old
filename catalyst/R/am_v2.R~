@@ -1,0 +1,23 @@
+##  AM version 2 functions
+## October 10, 2018
+## SKG
+
+
+#' Perform the interaction/infection step
+#'
+#' @param inf_indices indices of the currently infected agents
+#' @param sus_indices indices of currently susceptible agents
+#' @param agent_data a T+1 x N matrix where T+1 is the final time step and N is the number of agents where entry tn = k means that agent n at time t is in state k.
+#' @param nbr_list of length N where entry n is a vector of indices of neighbors, that is people who share an environment assignment of non-zero for the same category.  The list entry has a 0 element if it has no neighbors
+#' @param tt current time step
+#' @param sus_inf_arr a length(sus_states) x length(inf_states) x K array where entry ijk=1 means that an interaction between an agent in susceptible state i can put an agent in infectious state j into state k with non-zero probability.
+#' @return Updated agent_probs
+interact_agents <- function(inf_indices,
+                            sus_indices,
+                            agent_data,
+                            nbr_list,
+                            tt,
+                            sus_inf_arr){
+
+
+}

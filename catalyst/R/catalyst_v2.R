@@ -13,7 +13,7 @@
 #' @param states numeric vector indicating the different states an agent may take.  Default is 0:1
 #' @param inf_states subset of states that indicate the infectious states.  Default is 1.
 #' @param sus_states subset of states that indicate the susceptible states.  Default is 0
-#' @param sus_inf_arr a length(sus_states) x length(inf_states) x K array where entry ijk=1 means that an interaction between an agent in susceptible state i can put an agent in infectious state j into state k with non-zero probability.  Default is 
+#' @param sus_inf_arr a K x K x K array where entry ijk=1 means that an interaction between an agent in susceptible state i can put an agent in infectious state j into state k with non-zero probability. 
 #' @param do_AM logical.  Default is TRUE, which runs the AM interactions
 #' @return summarized simulation of the CM/AM
 catalyze <- function(ll, trans_fxn,
@@ -23,7 +23,7 @@ catalyze <- function(ll, trans_fxn,
                      states = 0:1,
                      inf_states = 1,
                      sus_states = 0,
-                     sus_inf_arr = array(c(0,1), dim = c(1, 1, 2)),
+                     sus_inf_arr,
                      do_AM = TRUE){
 
     ## Extract parameter sizes
@@ -44,7 +44,8 @@ catalyze <- function(ll, trans_fxn,
             ## Will change prob to 1 if infected, otherwise will rescale other probs where appropriate
             agent_probs <- interact_agents(inf_indices, sus_indices,
                                            agent_data, nbr_list, tt, 
-                                           sus_inf_arr)
+                                           sus_inf_arr,
+                                           agent_probs)
         }
         ## THE MULTINOMIAL UPDATE
         ## Could be made faster to actually do a full multinomial update probably like from a package
