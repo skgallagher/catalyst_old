@@ -26,7 +26,7 @@ interact_agents <- function(inf_indices,
     ## Loop over susceptibles
     for(ss in sus_indices){
         ## Extract the infectious neighbor indices
-        inf_nbr_inds <- intersect(nbr_list[ss], inf_indices)
+        inf_nbr_inds <- intersect(nbr_list[[ss]], inf_indices)
         is_infected <- FALSE
         if(length(inf_nbr_inds) > 0){
             for(ii in inf_nbr_inds){
@@ -108,4 +108,30 @@ rescale_agent_prob <- function(agent_prob,
     if(isTRUE(all.equal(sum(agent_prob), 0))) stop("no valid transfers available")
     agent_prob <- agent_prob / sum(agent_prob)
     return(agent_prob)
+}
+
+#' Extract the total number of agents in each state for given time
+#' 
+#' @param a T+1 x N matrix where T+1 is the final time step and N is the number of agents where entry tn = k means that agent n at time t is in state k.
+#' @param K number of states 1:K
+#' @param tt current time step
+#' @return X a table of current state totals
+get_totals <- function(agent_data, tt, K){
+    states <- factor(agent_data[tt, ], levels = 1:K)
+    X <- table(states)
+    return(X)
+
+}
+
+
+
+#' Extract the indices of agents in certain states
+#'
+#' @param states vector of integers subset of 1:K
+#' @param agent_data T x N matrix where T+1 is the final time step and N is the number of agents where entry tn = k means that agent n at time t is in state k.
+#' @param tt current time step
+extract_indices <- function(states, agent_data, tt){
+    current_states <- agent_data[tt, ]
+    indices <- which(current_states %in% states)
+    return(indices)
 }
