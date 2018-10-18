@@ -36,7 +36,7 @@ catalyze <- function(ll, trans_fxn,
 
         X <- get_totals(agent_data, tt, K) # total number of agents at this time step vec of size K
 
-        agent_probs <- extract_prob_trans(trans_fxn, agent_data, N, X, theta)
+        agent_probs <- extract_prob_trans(trans_fxn, X, theta)
         if(do_AM){
             ## Interact the infectious with susceptibles
             inf_indices <- extract_indices(inf_states, agent_data, tt)
@@ -59,3 +59,13 @@ catalyze <- function(ll, trans_fxn,
 
 }
                      
+#' Get the totals of agents at the current time step
+#'
+#' @param agent_data  a T+1 x N matrix where T+1 is the final time step and N is the number of agents where entry tn = k means that agent n at time t is in state k.
+#' @param tt current time step
+#' @param K total number of states
+#' @return vector of length K where each entry k is the number of agents in state k at time tt
+get_totals <- function(agent_data, tt, K){
+    X <- table(factor(agent_data[tt, ], levels = 1:K))
+    return(as.integer(X))
+}

@@ -1,0 +1,12 @@
+context("testing catalyst_v2 functions")
+
+
+test_that("get_totals", {
+
+    T <- 3
+    N <- 4
+    K <- 2
+    agent_data <- matrix(c(), nrow = T, ncol = N, byrow = FALSE)
+
+
+})
