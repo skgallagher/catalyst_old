@@ -33,12 +33,12 @@ catalyze <- function(ll, trans_fxn,
 
 
     for(tt in 1:(T-1)){
-        browser()
 
         X <- get_totals(agent_data, tt, K) # total number of agents at this time step vec of size K
 
         base_probs <- extract_prob_trans(trans_fxn, X, theta)
-        agent_probs <- base_to_agent_probs(base_probs, agent_data)
+        agent_probs <- base_to_agent_probs(base_probs,
+                                           agent_data, tt)
         if(do_AM){
             ## Interact the infectious with susceptibles
             inf_indices <- extract_indices(inf_states, agent_data, tt)

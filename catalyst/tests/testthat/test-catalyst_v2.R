@@ -112,4 +112,13 @@ test_that("catalyze", {
                     sus_inf_arr,
                     do_AM)
     X <- D_to_X_mat(out$D, out$init_X)
+
+    exp_X <- matrix(c(9, 1,
+                      9, 1,
+                      9, 1,
+                      9, 1), byrow = TRUE, ncol =2)
+    expect_equal(exp_X, X)
+
+    ###########################
+
 })
