@@ -32,3 +32,58 @@ test_that("loglike CM SI", {
    plot(x, y)
    abline(v = min$min)
 })
+
+
+test_that("find nbr indices", {
+    inf_inds <- 1:10
+    nbr_inds <- 3:5
+    x <- find_inf_nbrs(inf_inds, nbr_inds)
+    expect_equal(c(3,4,5), x)
+    ## different
+    inf_inds <- 3
+    nbr_inds <- 3:5
+    x <- find_inf_nbrs(inf_inds, nbr_inds)
+    expect_equal(3, x)
+    ## No overlap
+    inf_inds <- 3
+    nbr_inds <- 4:9
+    x <- find_inf_nbrs(inf_inds, nbr_inds)
+    expect_equal(0, x)
+
+
+})
+
+test_that("loglike AM SI", {
+    theta <- .5
+    T <- 3
+    N <- 4
+    agent_data <- matrix(c(1, 1, 1, 2,
+                           2, 1, 1, 2,
+                           2, 2, 1, 2),
+                         nrow = T, ncol = 4, byrow = TRUE)
+    nbr_list <- list(c(2, 4),
+                     c(1),
+                     c(0),
+                     c(1))
+    ## log like of just one
+    x <- loglike_AM_SI(theta, agent_data[1:2,], nbr_list)
+    loglike_a1 <- log(theta)
+    loglike_a2 <- 0
+    loglike_a3 <- 0
+    loglike_a4 <- 0
+    exp_loglike <- loglike_a1 + loglike_a2 + loglike_a3 + loglike_a4
+    expect_equal(-x, exp_loglike)
+
+    ## Log like of both time steps
+    x <- loglike_AM_SI(theta, agent_data[,], nbr_list)
+    loglike_a1 <- 0
+    loglike_a2 <- log(theta)
+    loglike_a3 <- 0
+    loglike_a4 <- 0
+    exp_loglike2 <- exp_loglike + loglike_a2
+    expect_equal(-x, exp_loglike2)
+    
+
+
+})
+

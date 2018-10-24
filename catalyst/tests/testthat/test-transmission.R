@@ -70,3 +70,19 @@ test_that("base to agent_probs", {
 
 
 })
+
+
+test_that("Test estimate SI", {
+    theta <- 1
+    X_init <- c(9, 1)
+    T <- 3
+    
+    out <- estimate_transmission(theta, X_init, T = T)
+    X2 <- c(9 - theta * 9/10, 1 + theta * 9/10)
+    expect_equal(X2, out[2,])
+    delta <- theta * X2[1] * X2[2] / 10
+    X3 <- c(X2[1] - delta, X2[2] + delta)
+    expect_equal(X3, out[3,])
+    
+
+})

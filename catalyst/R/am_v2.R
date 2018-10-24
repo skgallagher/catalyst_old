@@ -135,3 +135,33 @@ extract_indices <- function(states, agent_data, tt){
     indices <- which(current_states %in% states)
     return(indices)
 }
+
+
+estimate_AM_SI <- function(theta, agent_data,
+                           nbr_list){
+    N <- ncol(agent_data)
+    T <- nrow(agent_data)
+    init_S <- sum(agent_data[1, ] == 1)
+    X_mat <- matrix(0, nrow = T, ncol = 2)
+    X_mat[1, 1] <- init_S
+    for (tt in 2:T){
+        inf_inds <- which(agent_data[tt-1, ] == 2)
+        sus_inds <- which(agent_data[tt-1, ] == 1)
+        p <- sapply(sus_inds, function(nn){
+            nbr_inds <- nbr_list[[nn]]
+            inf_nbr_inds <- find_inf_nbrs(inf_inds, nbr_inds)
+            if(all(inf_nbr_inds > 0)){
+                n_nbr_inds <- length(inf_nbr_inds)
+                p <- 1 - (1- theta[1] / N)^n_nbr_inds
+            } else {
+                0
+            }
+        })
+        X_mat[tt, 1] <- X_mat[tt-1, 1] - sum(p)
+    }
+    
+    X_mat[, 2] <- N - X_mat[ ,1]
+    return(X_mat)
+    
+
+}

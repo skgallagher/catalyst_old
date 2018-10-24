@@ -235,3 +235,26 @@ test_that("extract indices", {
      
 
     })
+
+
+test_that("extract AM SI", {
+    theta <- 1
+    agent_data <- matrix(c(1, 1, 1, 2,
+                           2, 1, 1, 2,
+                           2, 2, 1, 2),
+                         nrow = T, ncol = 4, byrow = TRUE)
+    nbr_list <- list(c(2, 4),
+                     c(1),
+                     c(0),
+                     c(1))
+
+    X_out <- estimate_AM_SI(theta, agent_data,
+                            nbr_list)
+    exp_X <- matrix(c(3, 1,
+                      2, 2,
+                      1, 3),
+                    byrow = TRUE, ncol = 2)
+    expect_equal(exp_X, X_out)
+
+   
+})

@@ -21,6 +21,29 @@ SI <- function(X, theta){
 
 }
 
+#' Estimate the infectious curves from given parameters and initial values
+#'
+#' @param theta vector of parameters
+#' @param X_init vector of initial values of length K
+#' @param transmission_fxn function to output a KxK transition matrix
+#' @param T total number of time steps. Default is SI
+#' @return T x K matrix where entry tk is the number of people in state k at time t
+estimate_transmission <- function(theta, X_init,
+                        transmission_fxn = SI,
+                        T){
+    K <- length(X_init)
+    X_mat <- matrix(0, nrow = T, ncol = K)
+    X_mat[1, ] <- X_init
+    for(tt in 2:T){
+        D_prev <- transmission_fxn(X_mat[tt-1,], theta)
+        X_mat[tt,] <- colSums(D_prev)
+        
+    }
+    return(X_mat)
+
+}
+
+
 #' Turn the difference/transmission matrix into matrix of probs
 #
 #' @param trans_fxn  a function that returns the KxK transition matrix where K is the number of states.  Entry ij is the POSTIVE number of agents moving from state i to state j from time t-1 to t for t=1, \dots, T.
