@@ -1,0 +1,7 @@
+context("a more serious catalyze simulation")
+
+test_that("Setting up a simulation with 100 people",{
+
+
+
+})

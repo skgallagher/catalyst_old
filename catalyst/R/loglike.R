@@ -33,12 +33,14 @@ loglike_CM <- function(agent_data, theta,
 #' @return single number, the log likelihood of theta given X_mat
 loglike_CM_SI <- function(theta, X_mat){
     ## Constant in terms of data
+    N <- sum(X_mat[1, ])
     loglike <- sum(sapply(2:(nrow(X_mat)), function(tt){
+        p <- theta * X_mat[tt-1, 2] / N
         delta <- X_mat[tt-1, 1] - X_mat[tt, 1]
         ckt <- log(choose(X_mat[tt - 1, 1], delta))
         ## Stuff with the parameter theta
-        pos <- sum(delta * log(theta[1]))
-        neg <- sum(X_mat[tt, 1] * log(1-theta[1]))
+        pos <- sum(delta * log(p[1]))
+        neg <- sum(X_mat[tt, 1] * log(1-p[1]))
         return(ckt + pos + neg)
     }))
  
