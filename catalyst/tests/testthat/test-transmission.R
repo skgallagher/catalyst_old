@@ -86,3 +86,65 @@ test_that("Test estimate SI", {
     
 
 })
+
+
+
+test_that("SIR transmission", {
+
+    X <- c(9, 1, 0)
+    N <- sum(X)
+    theta <- c(1, 1)
+    out <- SIR(X, theta)
+    mat <- matrix(0, ncol = 3, nrow = 3)
+    mat[1, 2] <- .9
+    mat[1, 1] <- 8.1
+    mat[2, 3] <- 1
+    mat[2, 2] <- 0
+    mat[3, 3] <- 0
+    expect_equal(out, mat)
+
+}
+
+test_that("SIR extract_prob_trans", {
+
+    
+    X <- c(9, 1, 0)
+    N <- sum(X)
+    theta <- c(1, 1)
+
+    mat <- matrix(0, ncol = 3, nrow = 3)
+    mat[1, 2] <- .9
+    mat[1, 1] <- 8.1
+    mat[2, 3] <- 1
+    mat[2, 2] <- 0
+    mat[3, 3] <- 0
+
+    new_mat <- mat
+    new_mat[1, ] <- mat[1, ] / X[1]
+    new_mat[2, ] <- mat[2, ] / X[2]
+    new_mat[3, ] <- mat[3, ] / X[3]
+
+    out <- extract_prob_trans(SIR, X, theta)
+    expect_equal(out, new_mat)
+
+    
+})
+
+
+test_that("Test estimate SIR", {
+    theta <- c(1,1)
+    X_init <- c(9, 1, 0)
+    T <- 3
+    
+    out <- estimate_transmission(theta, X_init,
+                                 transmission_fxn = SIR,
+                                 T = T)
+    X2 <- c(9 - theta[1] * 9/10,  theta[1] * 9/10, 1)
+    expect_equal(X2, out[2,])
+    delta <- theta[1] * X2[1] * X2[2] / 10
+    X3 <- c(X2[1] - delta, delta, X2[3] + X2[2])
+    expect_equal(X3, out[3,])
+    
+
+})
+

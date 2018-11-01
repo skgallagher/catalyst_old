@@ -13,3 +13,4 @@ Imports: Rcpp (>= 0.12.16),
 LinkingTo: Rcpp
 Encoding: UTF-8
 Suggests: testthat
+RoxygenNote: 6.1.0

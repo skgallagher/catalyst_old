@@ -15,6 +15,9 @@
 #' @param sus_states subset of states that indicate the susceptible states.  Default is 1
 #' @param sus_inf_arr a K x K x K array where entry ijk=1 means that an interaction between an agent in susceptible state i can put an agent in infectious state j into state k with non-zero probability. 
 #' @param do_AM logical.  Default is TRUE, which runs the AM interactions
+#' @param do_keep_agent_data logical indicating whether we should keep entire agent data. Default is TRUE
+#' @param do_write_agent_data logical indicating whether we should write out agent_data. Default is FALSE
+#' @param writing_dir Default is ".".  Where we write out results to
 #' @return summarized simulation of the CM/AM
 catalyze <- function(ll, trans_fxn,
                      theta = c(beta),
@@ -24,7 +27,10 @@ catalyze <- function(ll, trans_fxn,
                      inf_states = 2,
                      sus_states = 1,
                      sus_inf_arr,
-                     do_AM = TRUE){
+                     do_AM = TRUE,
+                     do_keep_agent_data = TRUE,
+                     do_write_agent_data = FALSE,
+                     writing_dir = "."){
 
     ## Extract parameter sizes
     T <- nrow(agent_data)
@@ -56,6 +62,11 @@ catalyze <- function(ll, trans_fxn,
 
     ## Summarize the agents in a more applicable manner such as D or X
     sum_sim <- summarize_agent_data(agent_data, K)
+    sum_sim$ll <- ll
+    if(!do_keep_agent_data) sum_sim$agent_data <- NULL
+    if(do_write_agent_data){
+        write_agent_data(writing_dir, ll, sum_sim$agent_data)
+    }
     return(sum_sim)
     
 
@@ -97,8 +108,10 @@ summarize_agent_data <- function(agent_data, K){
         }
     }
     init_X <- c(get_totals(agent_data, tt = 1, K = K))
+    X <- D_to_X_mat(D, init_X)
+    if(!do_keep_agent_data) agent_data <- NULL # Get rid of large matrix
     return( list(agent_data = agent_data,
-                 D = D, init_X = init_X))
+                 D = D, init_X = init_X, X = X))
 
 
     
@@ -120,3 +133,6 @@ D_to_X_mat <- function(D, init_X){
     }
     return(X_mat)
 }
+
+
+

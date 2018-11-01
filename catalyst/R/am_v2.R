@@ -88,7 +88,9 @@ extract_transition_states <- function(sus_state, inf_states,
     zero_prob_states <- integer()
     for(inf_state in inf_states){
         zero_prob_states <- c(zero_prob_states,
-                              which(sus_inf_arr[sus_state, inf_state,] > 0))
+                              which(
+                                  sus_inf_arr[sus_state,
+                                              inf_state,] > 0))
     }
     if(length(zero_prob_states) == 0) stop("no valid transitions!")
     return(unique(zero_prob_states))
@@ -137,6 +139,31 @@ extract_indices <- function(states, agent_data, tt){
 }
 
 
+#' Estimate the AM from given parameters
+#'
+#' @param theta vector of parameters
+#' @param K total number of states 1:K
+#' @param inf_param_inds which indices correspond to probabilities of being infected by an individual infectious agent for p.  Default is 1 and it is beta
+#' @param agent_data T x N matrix where T+1 is the final time step and N is the number of agents where entry tn = k means that agent n at time t is in state k.
+#' @param nbr_list  of length N where entry n is a vector of indices of neighbors, that is people who share an environment assignment of non-zero for the same category.  The list entry has a 0 element if it has no neighbors
+#' @return a T x K matrix where entry ti is the number of agents in state i at time t
+estimate_AM <- function(theta, K,
+                        inf_param_inds = 1,
+                        agent_data,
+                        nbr_list,
+                        transmission_fxn = SI){
+    init_X <- get_totals(agent_data, tt = 1, K)
+    ## TODO
+}
+
+
+#' Estimate the SI AM from given parameters
+#'
+#' @param theta vector of parameters
+#' @param agent_data T x N matrix where T+1 is the final time step and N is the number of agents where entry tn = k means that agent n at time t is in state k.
+#' @param nbr_list  of length N where entry n is a vector of indices of neighbors, that is people who share an environment assignment of non-zero for the same category.  The list entry has a 0 element if it has no neighbors
+#' @return a T x 2 matrix where entry ti is the number of agents in state i at time t
+#' @details i.e. this is the expected value of the number of agents in each state given the previous agent states for the AM
 estimate_AM_SI <- function(theta, agent_data,
                            nbr_list){
     N <- ncol(agent_data)

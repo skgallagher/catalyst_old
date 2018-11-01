@@ -21,6 +21,27 @@ SI <- function(X, theta){
 
 }
 
+
+#' Scaffold for the SIR transmission CM
+#'
+#' @param X number of agents in each step at time t for states 1:K
+#' @param theta disease parameters.  Default is c(beta, gamma) for basic SIR model
+#' @return  a function that returns the KxK transition matrix where K is the number of states.  Entry ij is the POSTIVE number of agents moving from state i to state j from time t-1 to t for t=1, \dots, T.
+SIR <- function(X, theta){
+    K <- length(X)
+    ## States are S=1, I=2, R=3
+    ## theta = c(beta, gamma)
+    N <- sum(X)
+    mat <- matrix(0, nrow = K, ncol = K)
+    mat[1, 2] <- theta[1] * X[1] * X[2] / N # S to I
+    mat[1, 1] <- X[1] - mat[1, 2] # S to S
+    mat[2, 3] <- theta[2] * X[2]  # I to R
+    mat[2, 2] <- X[2] - mat[2,3] # I to I
+    mat[3, 3] <- X[3]
+    return(mat)
+
+}
+
 #' Estimate the infectious curves from given parameters and initial values
 #'
 #' @param theta vector of parameters
@@ -52,6 +73,7 @@ estimate_transmission <- function(theta, X_init,
 #' @return KxK transition PROBABILITY matrix where K is the number of states.  Entry ij is the probability of an agent in state i moving to state j from time t-1 to t for t=1, \dots, T.
 extract_prob_trans <- function(trans_fxn, X, theta){
     ## Each row ii of trans_fxn is divided by entry ii of X
+    Y <- ifelse(X == 0, 1, X) # if X[k] is 0 then there is 0 probability and so to divide we need to replace 0 with another number
     trans_fxn(X, theta) / X
 }
 

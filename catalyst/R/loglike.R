@@ -30,14 +30,18 @@ loglike_CM <- function(agent_data, theta,
 #'
 #' @param theta vector of parameters
 #' @param X_mat a (T+1)xK matrix where entry ti is the number of agents in state i at time t
+#' @param include_constant logical.  Default is FALSE.  If TRUE, we calculate the combination accounting for the possible permutaitons.  If FALSE, this constant is dropped.
 #' @return single number, the negative log likelihood of theta given X_mat
-loglike_CM_SI <- function(theta, X_mat){
+loglike_CM_SI <- function(theta, X_mat, include_constant = TRUE){
     ## Constant in terms of data
     N <- sum(X_mat[1, ])
     loglike <- sum(sapply(2:(nrow(X_mat)), function(tt){
         p <- theta * X_mat[tt-1, 2] / N
         delta <- X_mat[tt-1, 1] - X_mat[tt, 1]
-        ckt <- log(choose(X_mat[tt - 1, 1], delta))
+        ckt <- 0
+        if(include_constant){
+            ckt <- log(choose(X_mat[tt - 1, 1], delta))
+        }
         ## Stuff with the parameter theta
         pos <- sum(delta * log(p[1]))
         neg <- sum(X_mat[tt, 1] * log(1-p[1]))
