@@ -1,0 +1,9 @@
+
+#' Write agent_data simulations to an (appended) .csv
+#'
+#' @param writing_dir directory where we will write out data
+#' @param ll simulation number to be appended to agent data
+#' @param 
+write_agent_data <- function(writing_dir, ll, agent_data){
+
+}
