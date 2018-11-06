@@ -51,6 +51,7 @@ interact_agents <- function(inf_indices,
     }
 
 
+
     return(agent_probs)
 
 }

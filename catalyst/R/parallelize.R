@@ -34,6 +34,13 @@ simulate_catalyst <- function(L = 1,
                               do_write_inits = FALSE,
                               writing_dir = "."){
 
+
+    if(do_write_inits | do_write_agent_data){
+        if(!dir.exists(writing_dir)) dir.create(writing_dir,
+                                                recursive = TRUE)
+
+    }
+
         if(do_write_inits){ ## Write initial parameters
             write_inits(L = L,
                         ncores = n_cores,

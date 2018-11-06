@@ -1,0 +1,51 @@
+context("parallel stuff")
+
+test_that("Simulate catalyst", {
+
+    ## SI
+    L <- 10
+    ncores <- 1
+    do_par <- FALSE
+    trans_fxn <- SI
+    theta <- .4
+    N <- 100
+    T <- 20
+    K <- 2
+    agent_data <- matrix(1, nrow = T, ncol = N)
+    agent_data[1, 91:100] <- 2
+    nbr_list <- rep(list(1:N), N)
+    states <- 1:2
+    sus_states <- 1
+    inf_states <- 2
+    sus_inf_arr <- array(0, dim = c(K, K, K))
+    sus_inf_arr[1, 2, ] <- c(1 - theta[1]/ N, theta[1]/ N)
+    do_AM <- TRUE
+    do_keep_agent_data <- TRUE
+    do_write_agent_data <- TRUE
+    do_write_inits <- FALSE
+    writing_dir <- "./tmp"
+
+
+    out <- simulate_catalyst(L = L,
+                             ncores = ncores,
+                             do_par = do_par,
+                             trans_fxn = SI,
+                             theta = theta,
+                             agent_data = agent_data,
+                             nbr_list = nbr_list,
+                             states = states,
+                             inf_states = inf_states,
+                             sus_states = sus_states,
+                             sus_inf_arr = sus_inf_arr,
+                             do_AM = do_AM,
+                             do_keep_agent_data = do_keep_agent_data,
+                             do_write_agent_data = do_write_agent_data,
+                             do_write_inits = do_write_inits,
+                             writing_dir = writing_dir)
+
+
+    expect_equal(length(out), L)
+
+    unlink(writing_dir, recursive = TRUE)
+
+    })
