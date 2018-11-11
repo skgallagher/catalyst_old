@@ -50,20 +50,40 @@ test_that("Simulate catalyst", {
 
     X_df <- extract_X_df(out)
 
+ 
 
-    df_plot <- X_df %>% dplyr::group_by(t) %>%
+    df_plot <- X_df %>% dplyr::group_by(tt) %>%
         select(-c("ll")) %>%
         dplyr::summarize_all(.funs = c(mean = "mean", sd = "sd"))
 
     gg_df <- tidyr::gather(df_plot, key = type,
-                           value = value, -t) %>%
+                           value = value, -tt) %>%
         tidyr::separate(col = type, into = c("var", "measure"),
                  sep = "_") %>%
         tidyr::spread(key = measure, val = value)
 
-    g <- ggplot2::ggplot(data = gg_df,
-                         ggplot2::aes(x = t, y = mean, col = var,
-                                      group = var)) +
-        geom_line()
+    N <- sum(X_df[1, -c(ncol(X_df)-1, ncol(X_df))])
+    L <- max(X_df$ll)
 
-    })
+    g <- ggplot2::ggplot(data = gg_df, ggplot2::aes(x = tt)) + 
+        ggplot2::geom_line(ggplot2::aes(y = mean / N, col = var,
+                                              group = var), size = 2) +
+        ggplot2::geom_ribbon(ggplot2::aes(ymin = (mean -2 * sd)/N,
+                                          ymax = (mean + 2 * sd)/N,
+                                          fill = var), 
+                             alpha = .4) +
+        ggplot2::labs(x = "Time", y = "% of Individuals",
+                      col = "Mean", fill = "95% CI",
+                      title = "Time vs. % of Individuals",
+                      subtitle = sprintf("L = %d Simulations", L)) +
+        ggplot2::theme_bw() +
+        ggplot2::scale_color_manual(values = c("blue", "red"),
+                                      labels = c("S", "I"),
+                                      name = "Mean") +
+        ggplot2::scale_fill_manual(values = c("blue", "red"),
+                                   labels = c("S", "I"),
+                                   name = "95% CI")  
+    g
+})
+
+

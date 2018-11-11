@@ -26,9 +26,9 @@ loglike_CM <- function(agent_data, theta,
 }
 
 
-#' Compute loglike of the CM for the SI model
+#' Compute loglike of the CM for the SIR model
 #'
-#' @param theta vector of parameters
+#' @param theta vector of parameters (beta, gamma)
 #' @param X_mat a (T+1)xK matrix where entry ti is the number of agents in state i at time t
 #' @param include_constant logical.  Default is FALSE.  If TRUE, we calculate the combination accounting for the possible permutaitons.  If FALSE, this constant is dropped.
 #' @return single number, the negative log likelihood of theta given X_mat
@@ -36,7 +36,7 @@ loglike_CM_SI <- function(theta, X_mat, include_constant = TRUE){
     ## Constant in terms of data
     N <- sum(X_mat[1, ])
     loglike <- sum(sapply(2:(nrow(X_mat)), function(tt){
-        p <- theta * X_mat[tt-1, 2] / N
+        p <- theta[1] * X_mat[tt-1, 2] / N
         delta <- X_mat[tt-1, 1] - X_mat[tt, 1]
         ckt <- 0
         if(include_constant){
@@ -46,6 +46,36 @@ loglike_CM_SI <- function(theta, X_mat, include_constant = TRUE){
         pos <- sum(delta * log(p[1]))
         neg <- sum(X_mat[tt, 1] * log(1-p[1]))
         return(ckt + pos + neg)
+    }))
+ 
+    return(-loglike)
+}
+
+
+#' Compute loglike of the CM for the SI model
+#'
+#' @param theta vector of parameters
+#' @param X_mat a (T+1)xK matrix where entry ti is the number of agents in state i at time t
+#' @param include_constant logical.  Default is FALSE.  If TRUE, we calculate the combination accounting for the possible permutaitons.  If FALSE, this constant is dropped.
+#' @return single number, the negative log likelihood of theta given X_mat
+loglike_CM_SIR <- function(theta, X_mat, include_constant = TRUE){
+    ## Constant in terms of data
+    N <- sum(X_mat[1, ])
+    loglike <- sum(sapply(2:(nrow(X_mat)), function(tt){
+        p <- theta[1] * X_mat[tt-1, 2] / N
+        gamma <- theta[2]
+        delta_S <- X_mat[tt-1, 1] - X_mat[tt, 1] # Change in S
+        delta_R <- X_mat[tt-1, 3] - X_mat[tt, 3] # Change in R
+        ckt_S <- 0
+        ckt_R <- 0
+        if(include_constant){
+            ckt_S <- log(choose(X_mat[tt - 1, 1], delta_S))
+            ckt_R <- log(choose(X_mat[tt-1, 2], delta_R))
+        }
+        ## Stuff with the parameter theta
+        log_S <- delta_S * log(p) + X_mat[tt, 1] * log(1-p)
+        log_R <- delta_R * log(gamma) + X_mat[tt, 3] * log(1-gamma)
+        return(ckt_S + ckt_R + log_S + log_R)
     }))
  
     return(-loglike)

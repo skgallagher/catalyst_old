@@ -43,7 +43,7 @@ simulate_catalyst <- function(L = 1,
 
         if(do_write_inits){ ## Write initial parameters
             write_inits(L = L,
-                        ncores = n_cores,
+                        ncores = ncores,
                         do_par = do_par,
                         trans_fxn = trans_fxn,
                         theta = theta,

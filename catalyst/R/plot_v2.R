@@ -15,3 +15,25 @@ plot_sum_K <- function(X_df,
     
 
 }
+
+
+
+
+#' My custom ggplot background
+#'
+#' @return ggplot theme
+my_theme <- function(){
+    ggplot2::theme_bw() + ggplot2::theme(
+                                       axis.text.x = ggplot2::element_text(size = 16, family = "Palatino"),
+                                       axis.text.y= ggplot2::element_text(size = 16, family = "Palatino"),
+                                       axis.title.x= ggplot2::element_text(size = 18, family = "Palatino"),
+                                       axis.title.y= ggplot2::element_text(size = 18, family = "Palatino"),
+                                       plot.title = ggplot2::element_text(size = 24, family = "Palatino"),
+                                       legend.title = ggplot2::element_text(size = 20, family = "Palatino"),
+                                       legend.text = ggplot2::element_text(family = "Palatino", size = 16),
+                                       legend.key.size = ggplot2::unit(3, "line"),
+                                       plot.subtitle = ggplot2::element_text(size=16, family = "Palatino")
+                                   )
+}
+
+
