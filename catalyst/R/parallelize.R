@@ -14,7 +14,8 @@
 #' @param do_keep_agent_data logical indicating whether we should keep entire agent data. Default is TRUE
 #' @param do_write_agent_data logical indicating whether we should write out agent_data. Default is FALSE
 #' @param do_write_inits logical indicating whether we should write out initial values and parameters.  Default is FALSE.
-#' @param writing_dir  Where we write out results to. Default is ".". 
+#' @param writing_dir  Where we write out results to. Default is ".".
+#' @return list of simulations
 #' @importFrom foreach %dopar%
 #' @importFrom foreach %do%
 simulate_catalyst <- function(L = 1,

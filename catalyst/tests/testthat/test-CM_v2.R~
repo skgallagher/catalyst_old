@@ -1,0 +1,9 @@
+context("True CM model, v fast")
+
+test_that("SI_CM", {
+    init_vals <- c(9, 1)
+    theta <- 0
+    T <- 9
+    out <- SI_CM(init_vals, theta, T
+
+}

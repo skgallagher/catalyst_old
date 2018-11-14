@@ -1,0 +1,10 @@
+#' True SI CM
+#'
+#' @param init_vals vector (S0, I0)
+#' @param theta beta, the infection param
+#' @param T total number of time steps 0 to T inclusive
+#' @return 
+SI_CM <- function(init_vals,
+                  theta,
+                  T)
+                  
