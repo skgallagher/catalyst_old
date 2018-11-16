@@ -15,7 +15,9 @@
 #' @param do_write_agent_data logical indicating whether we should write out agent_data. Default is FALSE
 #' @param do_write_inits logical indicating whether we should write out initial values and parameters.  Default is FALSE.
 #' @param writing_dir  Where we write out results to. Default is ".".
+#' @param catalyze_fxn Default is catalyze.  Other option is catalyze_am_si.  See details
 #' @return list of simulations
+#' @details TODO
 #' @importFrom foreach %dopar%
 #' @importFrom foreach %do%
 simulate_catalyst <- function(L = 1,
@@ -33,7 +35,8 @@ simulate_catalyst <- function(L = 1,
                               do_keep_agent_data = TRUE,
                               do_write_agent_data = FALSE,
                               do_write_inits = FALSE,
-                              writing_dir = "."){
+                              writing_dir = ".",
+                              catalyze_fxn = catalyze){
 
 
     if(do_write_inits | do_write_agent_data){
@@ -58,13 +61,14 @@ simulate_catalyst <- function(L = 1,
                         do_keep_agent_data = do_keep_agent_data,
                         do_write_agent_data = do_write_agent_data,
                         do_write_inits = do_write_inits,
-                        writing_dir = writing_dir)
+                        writing_dir = writing_dir,
+                        catalyze_fxn = ctalyze_fxn)
         }
     
     if(!do_par){  ## just do a %do% loop with foreach
         sims <- foreach::foreach(ll=1:L,
                                  .packages = "foreach") %do% { 
-                                     out <- catalyze(ll,
+                                     out <- catalyze_fxn(ll,
                                                      trans_fxn = trans_fxn,
                                                      theta = theta,
                                                      agent_data = agent_data,

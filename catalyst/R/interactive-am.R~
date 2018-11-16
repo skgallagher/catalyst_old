@@ -1,0 +1,15 @@
+interactive_si_am <- function(ll, trans_fxn,
+                     theta = c(beta),
+                     agent_data,
+                     nbr_list,
+                     states = 1:2,
+                     inf_states = 2,
+                     sus_states = 1,
+                     sus_inf_arr,
+                     do_AM = TRUE,
+                     do_keep_agent_data = TRUE,
+                     do_write_agent_data = FALSE,
+                     writing_dir = "."){
+
+
+    }

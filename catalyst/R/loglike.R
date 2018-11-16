@@ -26,9 +26,28 @@ loglike_CM <- function(agent_data, theta,
 }
 
 
+#' Compute loglike of the CM for the SIR model for many simulations of model
+#'
+#' @param theta vector of parameters (beta)
+#' @param X_df a (L x (T+1))xK df where entry (l + t)i is the number of agents in state i at time t for simulation l
+#' @param include_constant logical.  Default is FALSE.  If TRUE, we calculate the combination accounting for the possible permutaitons.  If FALSE, this constant is dropped.
+#' @return single number, the negative log likelihood of theta given X_mat
+loglike_CM_SI_many_sims <- function(theta, X_df, include_constant = TRUE){
+    neg_loglikes <- plyr::daply(.data = X_df, .var = c("ll"),
+                                .fun = function(df){
+                                    neg_loglike <- loglike_CM_SI(theta, df,
+                                                                 include_constant)
+                                    neg_loglike
+
+                                })
+    return(sum(neg_loglikes))
+
+}
+
+
 #' Compute loglike of the CM for the SIR model
 #'
-#' @param theta vector of parameters (beta, gamma)
+#' @param theta vector of parameters (beta)
 #' @param X_mat a (T+1)xK matrix where entry ti is the number of agents in state i at time t
 #' @param include_constant logical.  Default is FALSE.  If TRUE, we calculate the combination accounting for the possible permutaitons.  If FALSE, this constant is dropped.
 #' @return single number, the negative log likelihood of theta given X_mat

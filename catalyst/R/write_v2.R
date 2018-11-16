@@ -48,6 +48,7 @@ write_agent_data <- function(writing_dir, ll, agent_data){
 #' @param do_write_agent_data logical indicating whether we should write out agent_data. Default is FALSE
 #' @param do_write_inits logical indicating whether we should write out initial values and parameters.  Default is FALSE.
 #' @param writing_dir  Where we write out results to. Default is ".".
+#' @param catalyze_fxn function for catalyze
 #' @return logical
 #' @details writes initial parameters to a RDS file along with a timestamp
 write_inits <- function(L,
@@ -65,7 +66,8 @@ write_inits <- function(L,
                         do_keep_agent_data,
                         do_write_agent_data,
                         do_write_inits,
-                        writing_dir){
+                        writing_dir,
+                        catalyze_fxn){
 
     ## TODO: do better than saving entire agent data and neighbor list
     time <- Sys.time()
@@ -84,7 +86,9 @@ write_inits <- function(L,
          do_keep_agent_data,
          do_write_agent_data,
          do_write_inits,
-         writing_dir, file= fn)
+         writing_dir,
+         catalyze_fxn,
+         file= fn)
          
     return(TRUE)
 }
