@@ -90,7 +90,7 @@ get_totals <- function(agent_data, tt, K){
 }
 
 
-#' Summarize the agent states into D,
+#' Summarize the agent states 
 #'
 #'  @param agent_data a T+1 x N matrix where T+1 is the final time step and N is the number of agents where entry tn = k means that agent n at time t is in state k.
 #' @param K number of states 1:K

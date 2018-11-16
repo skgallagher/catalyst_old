@@ -31,12 +31,15 @@ loglike_CM <- function(agent_data, theta,
 #' @param theta vector of parameters (beta)
 #' @param X_df a (L x (T+1))xK df where entry (l + t)i is the number of agents in state i at time t for simulation l
 #' @param include_constant logical.  Default is FALSE.  If TRUE, we calculate the combination accounting for the possible permutaitons.  If FALSE, this constant is dropped.
+#' @param do_interaction p is prob of infection from 1 - (1 - theta/N)^(#Inf at t-1).  Default is FALSE
 #' @return single number, the negative log likelihood of theta given X_mat
-loglike_CM_SI_many_sims <- function(theta, X_df, include_constant = TRUE){
-    neg_loglikes <- plyr::daply(.data = X_df, .var = c("ll"),
+loglike_CM_SI_many_sims <- function(theta, X_df, include_constant = TRUE,
+                                    do_interaction = FALSE){
+    neg_loglikes <- plyr::daply(.data = X_df, .var = c("ll "),
                                 .fun = function(df){
-                                    neg_loglike <- loglike_CM_SI(theta, df,
-                                                                 include_constant)
+                                    neg_loglike <- loglike_CM_SI(theta, df[, 1:2],
+                                                                 include_constant,
+                                                                 do_interaction)
                                     neg_loglike
 
                                 })
@@ -50,12 +53,22 @@ loglike_CM_SI_many_sims <- function(theta, X_df, include_constant = TRUE){
 #' @param theta vector of parameters (beta)
 #' @param X_mat a (T+1)xK matrix where entry ti is the number of agents in state i at time t
 #' @param include_constant logical.  Default is FALSE.  If TRUE, we calculate the combination accounting for the possible permutaitons.  If FALSE, this constant is dropped.
+#' @param do_interaction p is prob of infection from 1 - (1 - theta/N)^(#Inf at t-1).  Default is FALSE
 #' @return single number, the negative log likelihood of theta given X_mat
-loglike_CM_SI <- function(theta, X_mat, include_constant = TRUE){
+loglike_CM_SI <- function(theta, X_mat, include_constant = TRUE,
+                          do_interaction = FALSE){
     ## Constant in terms of data
     N <- sum(X_mat[1, ])
     loglike <- sum(sapply(2:(nrow(X_mat)), function(tt){
+        ## ## If there are no susceptibles or no infeciouts, then we are done
+        ## if(X_mat[tt-1, 1] == 0 | X_mat[tt-1, 2] == 0){
+        ##     out <- 0
+        ##     return(out)
+        ## }
         p <- theta[1] * X_mat[tt-1, 2] / N
+        if(do_interaction){
+            p <- 1 - (1 - theta[1]/N)^X_mat[tt-1, 2]
+        }
         delta <- X_mat[tt-1, 1] - X_mat[tt, 1]
         ckt <- 0
         if(include_constant){

@@ -80,6 +80,7 @@ interactive_am_si_homog <- function(thetas,
                                    ){
 
 
+
     N <- length(current_agent_data)
     thetas <- thetas * (current_agent_data %in% sus_states)
     inf_inds <- which(current_agent_data %in% inf_states)

@@ -26,6 +26,8 @@ test_that("catalyze_am_si_homog", {
                                 do_keep_agent_data,
                                 do_write_agent_data,
                                 writing_dir)
+
+    expect_equal(out$X, matrix(rep(c(2,1), times = T), ncol =2, byrow=TRUE))
     
 })
 
