@@ -1,4 +1,4 @@
-#' True SI CM
+#' SI CM simulation
 #'
 #' @param init_vals vector (S0, I0)
 #' @param theta beta, the infection param

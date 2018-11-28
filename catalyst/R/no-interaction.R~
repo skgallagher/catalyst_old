@@ -1,0 +1,9 @@
+## Functions for making the CM/AM with probability of transition as theta_n, e.g. the non interactive version
+
+
+
+non_interactive_si <- function(theta, T, N, init_states, do_CM = TRUE){
+
+
+
+    }

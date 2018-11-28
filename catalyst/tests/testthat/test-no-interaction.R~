@@ -1,0 +1,4 @@
+context("Testing the non-interactive SI AM, where each susceptible agent has probability theta_n of becoming infected")
+
+
+library(testthat)
