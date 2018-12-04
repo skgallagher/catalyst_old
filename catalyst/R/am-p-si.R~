@@ -1,0 +1,7 @@
+
+catalyst_am_p_si <- function(ll, p, agent_data,
+                             p_fxn){
+
+
+
+    }

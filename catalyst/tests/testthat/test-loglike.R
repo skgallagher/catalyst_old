@@ -87,3 +87,13 @@ test_that("loglike AM SI", {
 
 })
 
+
+test_that("p_fxn", {
+    p <- c(.5, .3)
+    grouping_vec <- c(1, 1, 1, 2)
+    pn <- p_id(p, grouping_vec)
+    exp_p <- c(.5, .5, .5, .3)
+    expect_equal(exp_p, pn)
+    
+
+})

@@ -94,8 +94,10 @@ get_totals <- function(agent_data, tt, K){
 #'
 #'  @param agent_data a T+1 x N matrix where T+1 is the final time step and N is the number of agents where entry tn = k means that agent n at time t is in state k.
 #' @param K number of states 1:K
+#' @param do_keep_agent_data logical.  Default is TRUE
 #' @return a TxKxK array where entry tij is the number of agents moving from state i to state j from time t-1 to T for t=1, \dots, T
-summarize_agent_data <- function(agent_data, K){
+summarize_agent_data <- function(agent_data, K,
+                                 do_keep_agent_data = TRUE){
 
     ## TODO
     ## Good c++ step

@@ -155,3 +155,45 @@ find_inf_nbrs <- function(inf_inds,
 
 
 }
+
+
+
+#' Return log like of bernoulli p
+#'
+#' @param p vector of size F - corresponds to different groups
+#' @param agent_data a T+1 x N matrix where T+1 is the final time step and N is the number of agents where entry tn = k means that agent n at time t is in state k.
+#' @param p_fxn How p goes to p_n
+#' @param grouping_vec vector of size N of assignments of agents to groups
+#' @return NEGATIVE loglike
+#' @details see page on
+loglike_p <- function(p, agent_data,
+                      grouping_vec,
+                      p_fxn = p_id){
+    pn <- p_fxn(p, grouping_vec)
+    N <- ncol(agent_data)
+    T <- nrow(agent_data)
+    loglike <- numeric(N)
+    for(nn in 1:N){
+        times <- which(agent_data[,nn] == 1) # which times are susceptible
+        times <- times[times < T] # don't do last one
+        for(tt in times){
+            loglike[nn] <- loglike[nn] +
+                (agent_data[tt+1, nn] - 1) * log(pn[nn]) +
+                (2 - agent_data[tt+1, nn]) * log(1-pn[nn])
+        }
+    }
+    return(-sum(loglike))
+    
+
+
+}
+
+#' Extract pn from p and group assignments
+#'
+#' @param p vector of size F with probs
+#' @param grouping_vec vector of size N where entry i is equal to 1, .., F is the group assignment of agent i
+#' @return vector of size N
+p_id <- function(p, grouping_vec){
+    pn <- p[grouping_vec]
+    return(pn)
+}
