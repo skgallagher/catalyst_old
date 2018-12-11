@@ -160,16 +160,22 @@ find_inf_nbrs <- function(inf_inds,
 
 #' Return log like of bernoulli p
 #'
-#' @param p vector of size F - corresponds to different groups
+#' @param params vector of parameters
 #' @param agent_data a T+1 x N matrix where T+1 is the final time step and N is the number of agents where entry tn = k means that agent n at time t is in state k.
 #' @param p_fxn How p goes to p_n
 #' @param grouping_vec vector of size N of assignments of agents to groups
+#' @param model_type either "group" or "mix2"
+#' @param agent_data data frame or NULL.  Default is NULL
+#' @param K number of total compartments
 #' @return NEGATIVE loglike
 #' @details see page on
-loglike_p <- function(p, agent_data,
+loglike_p <- function(params, agent_data,
                       grouping_vec,
-                      p_fxn = p_id){
-    pn <- p_fxn(p, grouping_vec)
+                      p_fxn = p_id,
+                      model_type = "group",
+                      K = NULL){
+    param_list <- extract_params(params, model_type)
+   
     N <- ncol(agent_data)
     T <- nrow(agent_data)
     loglike <- numeric(N)
@@ -177,23 +183,86 @@ loglike_p <- function(p, agent_data,
         times <- which(agent_data[,nn] == 1) # which times are susceptible
         times <- times[times < T] # don't do last one
         for(tt in times){
+            pn <- p_fxn(param_list$p, grouping_vec, param_list$weights,
+                        agent_data, tt, K)
             loglike[nn] <- loglike[nn] +
                 (agent_data[tt+1, nn] - 1) * log(pn[nn]) +
                 (2 - agent_data[tt+1, nn]) * log(1-pn[nn])
         }
     }
-    return(-sum(loglike))
-    
-
+    return(-sum(loglike))    
 
 }
+
+#' Extract the optimization parameters and sort into p and weights
+#'
+#' @param params vector of parameters
+#' @param model_type either "group" or "mix2"
+#' @return list of p, and weights
+extract_params <- function(params, model_type){
+    if(model_type == "group"){
+        params_list <- list(p = params, weights = NULL)
+        return(params_list)
+    } else if(model_type == "mix2"){
+        params_list <- list(p = params[1:2],
+                            weights = params[-c(1:2)])
+        return(params_list)
+    }
+    stop("This is not a valid parametrization")
+
+}
+
+
 
 #' Extract pn from p and group assignments
 #'
 #' @param p vector of size F with probs
 #' @param grouping_vec vector of size N where entry i is equal to 1, .., F is the group assignment of agent i
+#' @param agent_data data frame or NULL.  Default is NULL
+#' @param tt time step.  Default is NULL
+#' @param K number of total compartments
 #' @return vector of size N
-p_id <- function(p, grouping_vec){
+p_id <- function(p, grouping_vec, weights = NULL,
+                 agent_data = NULL,
+                 tt = NULL,
+                 K = NULL){
     pn <- p[grouping_vec]
     return(pn)
+}
+
+
+#' Extract pn from p, the grouping vec, and weights
+#'
+#' @param p vector of size F with probs
+#' @param grouping_vec vector of size N where entry i is equal to 1, .., F is the group assignment of agent i
+#' @param agent_data data frame or NULL.  Default is NULL
+#' @param tt time step.  Default is NULL
+#' @param K number of total compartments
+#' @return vector of size N where each entry is the probability
+p_mix <- function(p, grouping_vec, weights,
+                  agent_data = NULL,
+                  tt = NULL, K = NULL){
+    pn <- weights * p[1] + (1 - weights) * p[2]
+    return(pn)
+
+}
+
+
+#' Extract pn from p, the grouping vec, and weights
+#'
+#' @param p vector of size F with probs
+#' @param grouping_vec vector of size N where entry i is equal to 1, .., F is the group assignment of agent i
+#' @param agent_data data frame or NULL.  Default is NULL
+#' @param tt time step.  Default is NULL
+#' @param K number of total compartments
+#' @return vector of size N where each entry is the probability
+#' @details This function does group interactive eg bk * #Inf/N
+p_group_int <- function(p, grouping_vec,
+                        weights, agent_data,
+                        tt, K){
+    X <- get_totals(agent_data, tt, K)
+    pn <- p[grouping_vec]
+    pn <- pn * X[2] / N # beta_n * I / N
+    return(pn)
+
 }

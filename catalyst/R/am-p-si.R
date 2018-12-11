@@ -1,22 +1,30 @@
 #' Run catalyst assuming homogeneous network, different p
 #'
 #' @param ll simulation number
-#' @param p vector of size F, ps for the different groups
+#' @param params vector of parameters
 #' @param agent_data a T+1 x N matrix where T+1 is the final time step and N is the number of agents where entry tn = k means that agent n at time t is in state k.
 #' @param grouping_vec argument passed to p_fxn
 #' @param p_fxn function to take p to vector of pn
+#' @param model_type either "group", "mix2", or "group-int"
+#' @param K total number of compartments.  Default is NULL
 #' @return summarized simulation
-catalyst_am_p_si <- function(ll, p, agent_data,
+catalyst_am_p_si <- function(ll, params, agent_data,
                              grouping_vec,
-                             p_fxn = p_id){
+                             p_fxn = p_id,
+                             model_type = "group",
+                             K = NULL){
     T <- nrow(agent_data)
+    param_list <- extract_params(params, model_type)
     for(tt in 1:(T-1)){
-        pn <- p_fxn(p, grouping_vec)
+        pn <- p_fxn(param_list$p, grouping_vec,
+                    param_list$weights,
+                    agent_data, tt, K)
+
         sus_inds <- which(agent_data[tt,] == 1)
         agent_data[tt+1,] <- 2
         agent_data[tt+1, sus_inds] <- rbinom(n = length(sus_inds),
                         size = 1,
-                        prob = pn) + 1
+                        prob = pn[sus_inds]) + 1
         
         
     }
