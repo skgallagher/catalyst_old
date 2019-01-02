@@ -1,0 +1,21 @@
+## SKG
+## January 2, 2019
+## Mixture model yeah
+
+
+#' Generate mixture model data for a SI with 2 groups
+#'
+#' @param w weight of number of agents in group 1
+#' @param p1 prob of getting infected given agent is in group 1
+#' @param p2  prob of getting infected given agent is in group 2
+#' @param N total number of agents
+#' @param T total number of time steps
+#' @param x0 initial number of infectious
+gen_mix_2_data <- function(w, p1, p2,
+                           N, T,
+                           x0){
+    mat <- matrix(0, nrow = T, ncol = N)
+    
+
+
+}

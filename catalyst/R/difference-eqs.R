@@ -83,10 +83,12 @@ eval_difference_eqs <- function(params = c(.5, .25),
 #' @param T max time step
 #' @return matrix of size (T+1) x length(init_vals) where entry tj is the number of agents/individuals in state j at time t-1
 eval_D <- function(params, init_vals, D, T){
+
     K <- length(init_vals)
     X_mat <- matrix(0, ncol = K, nrow = (T+1))
-    X_mat[1, ] <- init_vals
+    X_mat[1, ] <- unlist(init_vals)
     for(tt in 1:T){
+#        if(tt == 1) browser()
         X_mat[tt + 1, ] <- X_mat[tt, ] + D(params, X_mat[tt, ], tt)
     }
     return(X_mat)

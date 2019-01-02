@@ -93,11 +93,13 @@ loglike_CM_SI <- function(theta, X_mat, include_constant = TRUE,
 loglike_CM_SIR <- function(theta, X_mat, include_constant = TRUE){
     ## Constant in terms of data
     N <- sum(X_mat[1, ])
-    loglike <- sum(sapply(2:(nrow(X_mat)), function(tt){
+    loglike <- sapply(2:(nrow(X_mat)), function(tt){
         p <- theta[1] * X_mat[tt-1, 2] / N
+        if(X_mat[tt-1, 1] <= 0 | X_mat[tt-1, 3] >= N |
+           X_mat[tt-1, 2] <= 0) return(0)
         gamma <- theta[2]
         delta_S <- X_mat[tt-1, 1] - X_mat[tt, 1] # Change in S
-        delta_R <- X_mat[tt-1, 3] - X_mat[tt, 3] # Change in R
+        delta_R <- -(X_mat[tt-1, 3] - X_mat[tt, 3]) # Change in R
         ckt_S <- 0
         ckt_R <- 0
         if(include_constant){
@@ -107,10 +109,13 @@ loglike_CM_SIR <- function(theta, X_mat, include_constant = TRUE){
         ## Stuff with the parameter theta
         log_S <- delta_S * log(p) + X_mat[tt, 1] * log(1-p)
         log_R <- delta_R * log(gamma) + X_mat[tt, 3] * log(1-gamma)
-        return(ckt_S + ckt_R + log_S + log_R)
-    }))
- 
-    return(-loglike)
+        out <- ckt_S + ckt_R + log_S + log_R
+        if(any(is.nan(out))) browser()
+        return(out)
+    })
+
+
+    return(-sum(loglike))
 }
 
 
@@ -243,6 +248,9 @@ p_mix <- function(p, grouping_vec, weights,
                   agent_data = NULL,
                   tt = NULL, K = NULL){
     pn <- weights * p[1] + (1 - weights) * p[2]
+    if(length(pn) < length(grouping_vec)){
+        pn <- rep(pn[1], length(grouping_vec))
+    }
     return(pn)
 
 }
