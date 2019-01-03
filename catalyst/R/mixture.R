@@ -47,10 +47,12 @@ gen_mix_2_data <- function(w, p1, p2,
 #' @param max_it integer - max number of iterations.  Default is 1000
 #' @return list of best theta values (w, p1, p2) and conv_it iteration on which alg. converged or 0 if it did not
 EM_mix_2 <- function(theta0, agent_data,
-                     tol=1e-3, max_it = 1e3){
+                     tol=1e-5, max_it = 1e3){
     theta <- theta0
-    print("init")
-    print(theta)
+
+    ## Subset agent_data to get rid of agents infected from beginning - they do not contribute to likelihood
+    init_inf_inds <- which(agent_data[1,] == 1)
+    agent_data <- agent_data[ ,-init_inf_inds]
 
     for(ii in 1:max_it){
 
@@ -59,8 +61,7 @@ EM_mix_2 <- function(theta0, agent_data,
             return(list(theta = theta, conv_it = ii))
         }
         theta <- theta_new
-        print(ii)
-        print(theta)
+
 
 
     }
@@ -81,7 +82,8 @@ EM_calc_mix2 <- function(theta, agent_data){
     w <- theta[1]
     p1 <- theta[2]
     p2 <- theta[3]
-    sum_atn <- apply(agent_data[-T, ], 2, function(col) sum(col == 0)) # vector of length N
+    sum_atn <- apply(agent_data[-T, , drop = FALSE],
+                     2, function(col) sum(col == 0)) # vecof length N
     becomes_inf <- apply(agent_data, 2, function(col){
         if(any(col == 1)){
             return(1)
@@ -90,7 +92,6 @@ EM_calc_mix2 <- function(theta, agent_data){
         }
     })
     EZ_cond <- get_cond_exp_mix2(w, p1, p2, agent_data) # vectof of length N
-
     ## New values
     ## p1
     denom1 <- sum(EZ_cond * sum_atn)
