@@ -43,7 +43,7 @@ gen_mix_2_data <- function(w, p1, p2,
 
 #' Use EM alg. to get estimates of two group bernoulli mixture model
 #'
-#' @param theta_init vector of (w, p_vec) - initial values
+#' @param theta_init vector of (w_vec, p_vec) - initial values
 #' @param agent_data TxN matrix of agent data where entry t,n is state of agent n at time t
 #' @param tol float - our convergence tolerance.  Default is .001
 #' @param max_it integer - max number of iterations.  Default is 1000
@@ -51,7 +51,7 @@ gen_mix_2_data <- function(w, p1, p2,
 EM_mix_2 <- function(theta_init, agent_data,
                      tol=1e-3, max_it = 1e3){
     theta <- theta_init
-  #  print(theta)
+    print(theta)
     ## Subset agent_data to get rid of agents infected from beginning - they do not contribute to likelihood for the SI model
     init_inf_inds <- which(agent_data[1,] == 1)
     if(length(init_inf_inds) > 0){
@@ -60,14 +60,13 @@ EM_mix_2 <- function(theta_init, agent_data,
 
     for(ii in 1:max_it){
 
-
         theta_new <- EM_calc_mix2(theta, agent_data)
+        print(theta_new)
         if(sqrt(sum((theta - theta_new)^2)) <= tol){
             return(list(theta = theta, conv_it = ii,
                         theta_init = theta_init))
         }
         theta <- theta_new
-#        print(theta)
 
 
     }
@@ -84,12 +83,14 @@ EM_mix_2 <- function(theta_init, agent_data,
 #' @return updated theta
 #' @details see dissertation for calculations
 EM_calc_mix2 <- function(theta, agent_data){
+   
     K <- length(theta) / 2
-    w <- theta[1:K]
+    w_vec <- theta[1:K]
     p_vec <- theta[-c(1:K)]
+    browser()
 
     ## E Step
-    EZ_cond <- E_step_SI(w, p_vec, agent_data)
+    EZ_cond <- E_step_SI(w_vec, p_vec, agent_data)
 
     ## M Step
     new_theta <- M_step_SI(EZ_cond, agent_data)
@@ -105,6 +106,7 @@ EM_calc_mix2 <- function(theta, agent_data){
 #' @param  agent_data  agent_data TxN matrix of agent data where entry t,n is state of agent n at time t.  All agents are initially susceptible as the initially infected have been extracted
 #' @return updated w_vec and updated p_vec combined into theta c(w_vec, p_vec)
 M_step_SI <- function(EZ_cond, agent_data){
+    browser()
     K <- nrow(EZ_cond)
     T <- nrow(agent_data)
     ## Get the number of days each agent was susceptible
@@ -120,10 +122,11 @@ M_step_SI <- function(EZ_cond, agent_data){
     ##
     num <- rowSums(EZ_cond * matrix(rep(became_inf, each = K), nrow = K)) # numerator for updated p
     p_vec <- num / N_vec
-    return(c(p_vec, w_vec))
+    return(c(w_vec, p_vec))
     
 
 }
+
 
 #' Calculate the E Step for SI mixture model
 #'
@@ -156,32 +159,4 @@ E_step_SI <- function(w, p_vec, agent_data){
     }
     Z_mat <- num_mat / matrix(rep(colSums(num_mat), each = K), nrow = K)
     return(Z_mat)
-}
-
-
-#' Get the conditional expected value of Z
-#'
-#' @param w weight
-#' @param w weight of number of agents in group 1
-#' @param p1 prob of getting infected given agent is in group 1
-#' @param p2  prob of getting infected given agent is in group 2
-#' @param agent_data TxN matrix of agent data where entry t,n is state of agent n at time t
-#' @return vector of size N
-get_cond_exp_mix2 <- function(w, p1, p2, agent_data){
-
-    N <- ncol(agent_data)
-    T <- nrow(agent_data)
-    Z <- rep(0, N)
-    for(nn in 1:N){
-        sus_inds <- which(agent_data[-T, nn] == 0)
-        if(length(sus_inds) > 0){
-            g1 <- w * prod(p1^(agent_data[sus_inds + 1, nn]) *
-                           (1-p1)^(1-agent_data[sus_inds + 1, nn]))
-            g2 <- (1-w) * prod(p2^(agent_data[sus_inds + 1, nn])  * 
-                               (1-p2)^(1-agent_data[sus_inds + 1, nn]))
-            Z[nn] <- g1 / (g1 + g2)## 
-        }
-    }
-    return(Z)
-
 }
