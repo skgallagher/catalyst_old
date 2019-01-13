@@ -43,7 +43,7 @@ gen_mix_2_data <- function(w, p1, p2,
 
 #' Use EM alg. to get estimates of two group bernoulli mixture model
 #'
-#' @param theta_init vector of (w_vec, p_vec) - initial values
+#' @param theta_init vector of (w, p_vec) - initial values
 #' @param agent_data TxN matrix of agent data where entry t,n is state of agent n at time t
 #' @param tol float - our convergence tolerance.  Default is .001
 #' @param max_it integer - max number of iterations.  Default is 1000
@@ -51,7 +51,7 @@ gen_mix_2_data <- function(w, p1, p2,
 EM_mix_2 <- function(theta_init, agent_data,
                      tol=1e-3, max_it = 1e3){
     theta <- theta_init
-    print(theta)
+  #  print(theta)
     ## Subset agent_data to get rid of agents infected from beginning - they do not contribute to likelihood for the SI model
     init_inf_inds <- which(agent_data[1,] == 1)
     if(length(init_inf_inds) > 0){
@@ -60,13 +60,14 @@ EM_mix_2 <- function(theta_init, agent_data,
 
     for(ii in 1:max_it){
 
+
         theta_new <- EM_calc_mix2(theta, agent_data)
-        print(theta_new)
         if(sqrt(sum((theta - theta_new)^2)) <= tol){
             return(list(theta = theta, conv_it = ii,
                         theta_init = theta_init))
         }
         theta <- theta_new
+#        print(theta)
 
 
     }
@@ -78,16 +79,14 @@ EM_mix_2 <- function(theta_init, agent_data,
 
 #' Do inner calculations for EM
 #'
-#' @param theta vector (w, p_vec)
+#' @param theta vector (w_vec, p_vec)
 #' @param agent_data agent_data TxN matrix of agent data where entry t,n is state of agent n at time t
 #' @return updated theta
 #' @details see dissertation for calculations
 EM_calc_mix2 <- function(theta, agent_data){
-   
     K <- length(theta) / 2
     w_vec <- theta[1:K]
     p_vec <- theta[-c(1:K)]
-    browser()
 
     ## E Step
     EZ_cond <- E_step_SI(w_vec, p_vec, agent_data)
@@ -106,22 +105,29 @@ EM_calc_mix2 <- function(theta, agent_data){
 #' @param  agent_data  agent_data TxN matrix of agent data where entry t,n is state of agent n at time t.  All agents are initially susceptible as the initially infected have been extracted
 #' @return updated w_vec and updated p_vec combined into theta c(w_vec, p_vec)
 M_step_SI <- function(EZ_cond, agent_data){
-    browser()
     K <- nrow(EZ_cond)
     T <- nrow(agent_data)
-    ## Get the number of days each agent was susceptible
-    days_sus <- apply(agent_data[-T, , drop = FALSE], 2, function(col){
-        sum(col == 0)
-    })
-    became_inf <- apply(agent_data, 2, function(col){
-        sum(sum(col == 1) > 0) # at least one 1, which means agent became infected, zero otherwise
-    })
-    N_vec <- rowSums(EZ_cond * matrix(rep(days_sus, each = K), nrow = K)) # effective observations
-    ## w
-    w_vec <- N_vec / sum(N_vec)
-    ##
-    num <- rowSums(EZ_cond * matrix(rep(became_inf, each = K), nrow = K)) # numerator for updated p
-    p_vec <- num / N_vec
+    N <- ncol(agent_data)
+    Nk <- numeric(K)
+    numk <- numeric(K) 
+    for(kk in 1:K){
+        for(nn in 1:N){
+            for(tt in 2:T){
+                prev_state <- agent_data[tt-1, nn]
+                cur_state <- agent_data[tt, nn]
+                EZ <- EZ_cond[kk, nn]
+#                print(EZ)
+                if(prev_state == 0){ # only sum over susceptibles
+                    numk[kk] <- numk[kk] + EZ * cur_state
+                    Nk[kk] <- Nk[kk] + EZ
+                }
+                
+            }
+        }
+
+    }
+    p_vec <- numk / Nk
+    w_vec <- Nk / sum(Nk)
     return(c(w_vec, p_vec))
     
 
@@ -135,7 +141,8 @@ M_step_SI <- function(EZ_cond, agent_data){
 #' @param agent_data  agent_data TxN matrix of agent data where entry t,n is state of agent n at time t.  All agents are initially susceptible as the initially infected have been extracted
 #' @return expected value of Z conditioned on w and p_vec - a KxN matrix where entry k n is the expected value of Z for agent n.  
 E_step_SI <- function(w, p_vec, agent_data){
-
+    print(w)
+    print(p_vec)
     K <- length(w)
     N <- ncol(agent_data)
     T <- nrow(agent_data)
@@ -143,8 +150,8 @@ E_step_SI <- function(w, p_vec, agent_data){
     num_mat <- log_num_mat
     Z_mat <- num_mat
     for(kk in 1:K){
+        log_num_mat[kk,] <-  log(w[kk])
         for(nn in 1:N){
-            log_num_mat[kk, nn] <-  log(w[kk])
             for(tt in 1:(T-1)){
                 current_state <- agent_data[tt, nn]
                 if(current_state == 1){
@@ -160,3 +167,26 @@ E_step_SI <- function(w, p_vec, agent_data){
     Z_mat <- num_mat / matrix(rep(colSums(num_mat), each = K), nrow = K)
     return(Z_mat)
 }
+
+
+## Expectation Step
+estep <- function(obs,pi,p,q){
+  pi_estep <- (pi*dbinom(obs,1,p)) / ( pi*dbinom(obs,1,p) + (1-pi)*dbinom(obs,1,q) )
+  return(pi_estep)
+}
+
+
+## Maximization Step
+mstep <- function(obs,e.step){
+  
+  # estimate pi
+  pi_temp <- mean(e.step)
+  
+  # estimate p,q
+  p_temp <- sum(obs*e.step) / sum(e.step)
+  q_temp <- sum(obs*(1-e.step)) / sum(1-e.step)
+  
+  list(pi_temp,p_temp,q_temp)   
+}
+
+

@@ -1,0 +1,50 @@
+
+#' @param Nk - number of objects in group
+#' @param data data frame with I and R the infection and recovery times, respectively, for one agent
+#' @param bd if "upper" then we are looking for upper sus bd
+find_S_bd <- function(Nk, data, bd = "upper"){
+    df <- arrange(data, I)
+    inds <- integer(Nk)
+    max_t <- max(df$R)
+    sir_df <- data.frame(t = 1:max_t, did_obs = 0, S = 0, I=0, R=0)
+    inds[1] <- 1
+    ## These three will always be here for "upper"
+    ## Make observations on these days
+    sir_df$did_obs[df$I[1]] <- 1
+    sir_df$did_obs[df$R[1]] <- 1
+    ## But data looks like this in between obs
+    sir_df[df$I[1]:(df$R[1] - 1), -c(1:2)] <- rep(c(Nk-1, 1, 0),
+                                                  each =  df$R[1] - df$I[1])
+    sir_df[df$R[1]:nrow(df), -c(1:2)] <- rep(c(Nk-1, 0, 1),
+                                             each =  nrow(df) - df$R[1] + 1)
+    if(Nk <= 1){
+        non_zero_inds <- which(sir_df$did_obs == 1)
+        sir_df <- sir_df[non_zero_inds,]
+        return(list(sir_df = sir_df, inds = inds))
+    }
+    ## Take out observation
+    df <- df[-1,] 
+    ## Otherwise, add next in line and check monotonicity of R
+    for(ii in 2:Nk){
+        for(jj in 1:nrow(df)){
+            test_df <- add_agent(sir_df, df$I[jj], df$R[jj])
+            if(test_is_mono(test_df)){
+                sir_df <- test_df
+                df <- trim_obs(df, jj)
+                inds[ii] <- jj
+                break
+            }
+            if(jj == nrow(df)){
+                return(0)
+            }
+
+        }
+
+    }
+    ## Subset and return
+    non_zero_inds <- which(sir_df$did_obs == 1)
+    sir_df <- sir_df[non_zero_inds,]
+    return(list(sir_df = sir_df, inds = inds))
+
+}
+
