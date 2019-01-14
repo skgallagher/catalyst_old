@@ -1,0 +1,14 @@
+library(testthat)
+
+context("put hagelloch households into a grid")
+
+
+testthat("main fxn", {
+
+
+
+
+
+    })
+
+         
