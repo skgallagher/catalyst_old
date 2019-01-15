@@ -105,3 +105,70 @@ df_to_SIR <- function(df){
     }
     return(sir)
 }
+
+
+#' Find indices of local maxima in a numeric vector
+#' 
+#' @param x numeric vector
+#' @param partial default is TRUE, meaning we check edges
+#' @param decreasing default is FALSE which means we look for maxima
+#' @param thresh default is 0, which means we look for any difference
+#' @return vector of indices corresponding to local maxima
+#' @details Thanks https://stackoverflow.com/questions/6836409/finding-local-maxima-and-minima
+find_peaks <- function(x, partial = TRUE, decreasing = FALSE, thresh = 0){
+    if (decreasing){
+         if (partial){
+             which(diff(c(FALSE,diff(x)>0,TRUE))>0)
+         }else {
+             which(diff(diff(x)>thresh)> thresh)+1
+         }
+     }else {
+         if (partial){
+             which(diff(c(TRUE,diff(x)>= -thresh, FALSE))<0)
+         }else {
+             which(diff(diff(x)>=0)<0)+1
+         }
+     }
+
+}
+
+
+#' Smooth out  infectious curve so there is exactly one maximum
+#'
+#' @param x vector of observations
+#' @return indices which constitute a curve with exactly on maximum (edges don't count)
+make_one_peak <- function(x){
+    global_max <- max(x)
+    max_ind <- which.max(x)
+    seq1 <- x[1:max_ind]
+    seq2 <- x[max_ind:length(x)]
+    inds1 <- get_mono_seq(seq1, decreasing = FALSE, orig_inds = 1:max_ind)
+    inds2 <- get_mono_seq(seq2, decreasing = TRUE, orig_inds = max_ind:length(x))
+    inds <- unique(c(inds1, inds2))
+    vals <- x[inds]
+    mat <- matrix(c(inds, vals), ncol = 2)
+    return(mat)
+    
+}
+    
+
+get_mono_seq <- function(x, orig_inds,decreasing = FALSE){
+    is_mono <- FALSE
+    y <- orig_inds
+    while(!is_mono){
+        valley_inds <- find_peaks(x, partial = FALSE,
+                                decreasing = !(decreasing))
+        peak_inds <- find_peaks(x, partial = FALSE,
+                                decreasing = decreasing)
+        if(length(peak_inds) > 0){
+            x <- x[-valley_inds]
+            y <- y[-valley_inds]
+        } else{
+            is_mono <- TRUE
+        }
+
+    }
+    return(y)
+
+}
+                          
