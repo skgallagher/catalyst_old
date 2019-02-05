@@ -1,3 +1,4 @@
+
 ##  AM version 2 functions
 ## October 10, 2018
 ## SKG
@@ -25,6 +26,7 @@ interact_agents <- function(inf_indices,
 
     ## Loop over susceptibles
     for(ss in sus_indices){
+
         ## Extract the infectious neighbor indices
         inf_nbr_inds <- intersect(nbr_list[[ss]], inf_indices)
         is_infected <- FALSE
@@ -134,6 +136,7 @@ get_totals <- function(agent_data, tt, K){
 #' @param agent_data T x N matrix where T+1 is the final time step and N is the number of agents where entry tn = k means that agent n at time t is in state k.
 #' @param tt current time step
 extract_indices <- function(states, agent_data, tt){
+ 
     current_states <- agent_data[tt, ]
     indices <- which(current_states %in% states)
     return(indices)

@@ -1,4 +1,4 @@
-context("loglike")
+testthat::context("loglike")
 
 test_that("loglike CM SI", {
     theta <- .9
@@ -95,5 +95,32 @@ test_that("p_fxn", {
     exp_p <- c(.5, .5, .5, .3)
     expect_equal(exp_p, pn)
     
+
+})
+
+
+test_that("loglike_sir_cm_rf", {
+    params <- c(.1, .2)
+    N <- 5
+    T <- 4
+    K <- 3
+    suff_stats <- matrix(c(1, 1, 1, 1, 2,
+                           2, 3, 4, 2, -1,
+                           3, 4, 4, 3, 3), byrow = TRUE, ncol = N)
+
+    X <- suff_stats_to_X(suff_stats, T, K)
+    X
+
+   # devtools::load_all()
+    ll <- loglike_sir_cm_rf(params, suff_stats, X)
+    rho <- params[1]
+    gamma <- params[2]
+    a1 <- log(1-rho) * (X[1]) + log(1 - (1- rho)^X[2]) + log(gamma)
+    a2 <- log(1-rho) * sum(X[1:2]) + log(1 - (1- rho)^X[3]) 
+    a3 <- log(1-rho) * sum(X[1:3])
+    a4 <- log(1-rho) * X[1] + log(1 - (1-rho)^X[2]) + log(gamma)
+    a5 <- 2 * log(1-gamma) + log(gamma)
+    out <- c(a1, a2, a3, a4, a5)
+    expect_equal(-sum(out), ll)
 
 })

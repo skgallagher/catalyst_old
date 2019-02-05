@@ -42,6 +42,7 @@ catalyze <- function(ll, trans_fxn,
     for(tt in 1:(T-1)){
 
 
+
         X <- get_totals(agent_data, tt, K) # total number of agents at this time step vec of size K
 
         base_probs <- extract_prob_trans(trans_fxn, X, theta)
@@ -52,6 +53,7 @@ catalyze <- function(ll, trans_fxn,
             inf_indices <- extract_indices(inf_states, agent_data, tt)
             sus_indices <- extract_indices(sus_states, agent_data, tt)
             ## Will change prob to 1 if infected, otherwise will rescale other probs where appropriate
+
             agent_probs <- interact_agents(inf_indices, sus_indices,
                                            inf_states,
                                            agent_data, nbr_list, tt, 

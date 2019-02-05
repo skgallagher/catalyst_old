@@ -274,3 +274,77 @@ p_group_int <- function(p, grouping_vec,
     return(pn)
 
 }
+
+
+#' Loglike for SIR-CM Reed Frost chain binomial
+#'
+#' @param params (rho * N, gamma)
+#' @param suff_stats matrix of size 3 xN where the first row is the agent's initial state, the second is LAST time susceptible, and the third is the last time infectious. (A0n, sn, tn)
+#' @param X matrix T x 3 where entry t, k is the number of total agents in state k at time t-1
+#' @return negative loglike
+loglike_sir_cm_rf <- function(params,
+                              suff_stats,
+                              X){
+    N <- ncol(suff_stats)
+    rho <- params[1] 
+    gamma <- params[2]
+    T <- nrow(X)
+    loglike_agent <- numeric(N)
+    for(n in 1:N){
+        if(suff_stats[1, n] == 1){ ## Sus at time 0
+            s <- suff_stats[2,n] # last time sus
+            t <- suff_stats[3,n] # last time infectious
+            loglike_agent[n] <- sum(X[1:(s-1)]) * log(1 - rho) +
+                (s < T) * log(1 - (1- rho)^X[s]) +
+                (s < T) * (t - s - 1) * log(1 - gamma) +
+                (t == T & s < (T-1)) * log( 1- gamma) + 
+                (t < T) * log(gamma)
+        } else if (suff_stats[1, n] == 2){ ## Inf at time 0
+            loglike_agent[n] <- (t-1) * log( 1- gamma) +
+                (t < T) * log( gamma)
+        }
+
+    }
+  #  print(loglike_agent)
+    loglike <- sum(loglike_agent)
+    return(-loglike)
+
+
+
+}
+
+#' Convert suff stats for agents into aggregate totals
+#'
+#' @param suff_stats matrix of size 3 xN where the first row is the agent's initial state, the second is LAST time susceptible, and the third is the last time infectious. (A0n, sn, tn)
+#' @param T last time step recorded (1:T)
+#' @param K number of total states
+#' @return matrix Tx 3 where entry t, k is the number of total agents in state k at time t-1
+suff_stats_to_X <- function(suff_stats, T, K){
+    N <- ncol(suff_stats)
+    X <- matrix(0, nrow = T, ncol = K)
+    X[1, 1] <- sum(suff_stats[1,] == 1)
+    X[1, 3] <- sum(suff_stats[1,] == 3)
+    for(tt in 2:(T)){
+        for (nn in 1:N){
+            #is susceptible
+            if((suff_stats[2, nn] >= (tt)) & 
+               (suff_stats[3, nn] > (tt))){
+                X[tt, 1] <- X[tt, 1] + 1
+            } else if ( suff_stats[2, nn] == T){
+                X[tt, 1] <-  X[tt, 1] + 1
+            } else if( suff_stats[3, nn] < (tt)){
+                X[tt, 3] <- X[tt, 3] + 1
+            }
+        }
+    }
+    X[,2] <- N - X[, 1] - X[ ,3]
+    return(X)
+            
+            
+        
+    
+
+}
+    
+                              
+                          
