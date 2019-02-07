@@ -1,0 +1,6 @@
+testthat::context("testing SIR simulations")
+
+
+test_that("colVar",{
+
+})
