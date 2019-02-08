@@ -13,11 +13,13 @@
 #' @param L total number of simulations.  Default is 100.
 #' @param K total number of compartments.  Default is 3.
 #' @param X0 vector of initial values of size K
+#' @param det_prob logical.  Default is TRUE, which uses second argument in Binomial beta I / N as the expected value
 #' @return list of summary df with average and variance at each time step, and the actual simulations contained in 3 matrices, S_mat, I_mat, and R_mat
 simulate_SIR <- function(params, mod_fxn = sir_bin,
                          prob_fxn = km_prob,
                          T = 50, L = 100, K = 3,
-                         X0 = c(950, 50, 0)){
+                         X0 = c(950, 50, 0),
+                         det_prob = TRUE){
 
     ## Initialize S, I, and R states
     S_mat <- matrix(0, nrow = T, ncol = L)
@@ -26,8 +28,14 @@ simulate_SIR <- function(params, mod_fxn = sir_bin,
     I_mat[1, ] <- X0[2]
     R_mat <- matrix(0, nrow = T, ncol = L)
     R_mat[1, ] <- X0[3]
+
+    X <- NULL
+    if(det_prob){
+        X <- exp_sir(params, T, K, X0,
+                 prob_fxn)
+    }
     for(ll in 1:L){
-        sim <- mod_fxn(params, T, K, X0, prob_fxn)
+        sim <- mod_fxn(params, T, K, X0, prob_fxn, X)
         S_mat[, ll] <- sim[, 1]
         I_mat[, ll] <- sim[, 2]
         R_mat[, ll] <- sim[, 3]
@@ -68,20 +76,92 @@ rowVar <- function(mat){
 #' @param K total number of states
 #' @param X0 vector of initial states of size K
 #' @param prob_fxn fiunction to extract probability of S going to I at time t-1 to t.  Default is KM prob which is BI(t-1)/N
+#' @param det_prob Use S to I prob as deterministic
 #' @return matrix of size T x 3 where first column is S, second is I, and third is R.
 sir_bin <- function(params, T, K, X0,
-                    prob_fxn = km_prob){
+                    prob_fxn = km_prob,
+                    X = NULL){
     N <- sum(X0)
     mat <- matrix(0, nrow = T, ncol = 3)
     mat[1, ] <- X0
+    if(is.null(X)){
+        X <- mat[1,] # random X
+    }
+    
     for(tt in 2:T){
-        pt <- prob_fxn(params, mat[tt-1, 2], N)
+        pt <- prob_fxn(params, X[tt-1, 2], N)
         gamma <- params["gamma"]
         mat[tt, 1] <- mat[tt-1,1] - rbinom(1, mat[tt-1,1], pt)
         mat[tt, 3] <- mat[tt-1,3] + rbinom(1, mat[tt-1, 2], gamma)
         mat[tt, 2] <- N - mat[tt, 1] -  mat[tt, 3]
     }
     return(mat)
+}
+
+
+
+#' Calculate the expected value stochastic SIR-CM binomial
+#'
+#' @param params c(beta, gamma)
+#' @param T total number of time steps
+#' @param K total number of states
+#' @param X0 vector of initial states of size K
+#' @param prob_fxn fiunction to extract probability of S going to I at time t-1 to t.  Default is KM prob which is BI(t-1)/N
+#' @return matrix of size T x 3 where first column is S, second is I, and third is R.
+exp_sir <- function(params, T, K, X0,
+                    prob_fxn = km_prob){
+
+    N <- sum(X0)
+    mat <- matrix(0, nrow = T, ncol = 3)
+    mat[1, ] <- X0
+    for(tt in 2:T){
+        pt <- prob_fxn(params, mat[tt-1, 2], N)
+        gamma <- params["gamma"]
+        mat[tt, 1] <- mat[tt-1,1] - mat[tt-1,1] * pt
+        mat[tt, 3] <- mat[tt-1,3] + mat[tt-1, 2] * gamma
+        mat[tt, 2] <- N - mat[tt, 1] -  mat[tt, 3]
+    }
+    return(mat)
+    
+
+}
+
+#' Calculate the expected variance of stochastic SIR-CM binomial
+#'
+#' @param params c(beta, gamma)
+#' @param T total number of time steps
+#' @param K total number of states
+#' @param X0 vector of initial states of size K
+#' @param X matrix of T x 3 Expected values of S, I, R at each time step
+#' @param prob_fxn fiunction to extract probability of S going to I at time t-1 to t.  Default is KM prob which is BI(t-1)/N
+#' @return matrix of size T x 4 where first column is V[S], second is V[I], third is V[R], and fourth is Cov[S, R].
+var_sir <- function(params, T, K, X0,
+                    X,
+                    prob_fxn = km_prob){
+
+    N <- sum(X0)
+    mat <- matrix(0, nrow = T, ncol = 4) #V[S], V[I], V[R], Cov[S, R]
+    mat[1, ] <- 0
+    for(tt in 2:T){
+
+        pt <- prob_fxn(params, X[tt-1, 2], N)
+        gamma <- params["gamma"]
+        ## V[S]
+        mat[tt, 1] <- pt * ( 1- pt) * X[tt-1, 1] +
+            (1 - pt)^2 * mat[tt-1, 1]
+        ## Cov[S, R]
+        mat[tt, 4] <- -mat[tt-1, 1] * gamma * (1 - pt) +
+            (1 - pt) * (1 - gamma) * mat[tt-1, 4]
+        ## V[R]
+        mat[tt, 3] <- X[tt-1, 2] * gamma * (1 - gamma) +
+            (1 - gamma)^2 * mat[tt-1, 3] +
+            gamma^2 * mat[tt-1, 1] - 
+            2 * gamma * (1 - gamma) * mat[tt - 1, 4]
+        ## V[I]
+        mat[tt, 2] <- mat[tt, 1] +  mat[tt, 3] + 2 * mat[tt, 4]
+    }
+    return(mat)
+
 }
 
 #' Proability for KM SIR S to I
