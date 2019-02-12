@@ -30,7 +30,7 @@ simulate_SIR <- function(params, mod_fxn = sir_bin,
     R_mat[1, ] <- X0[3]
 
     X <- NULL
-    if(det_prob){
+    if(det_prob){ # expected values with non-random prob
         X <- exp_sir(params, T, K, X0,
                  prob_fxn)
     }
@@ -193,6 +193,9 @@ rf_prob <- function(params, I, N){
 
 
 
+
+
+
 #' Calculate (negative) log-like of the SIR with given probability function
 #'
 #' @param params vector of params to optimize either (beta, gamma) or (rho, gamma)
@@ -211,9 +214,9 @@ loglike_sir_bin <- function(params, suff_stats,
     for(nn in 1:N){
         S_loglike <-  0
         I_loglike <- 0
-        a0 <- suff_stats[nn, 1]
-        s <- suff_stats[nn, 2]
-        t <- suff_stats[nn, 3]
+        a0 <- suff_stats[1, nn]
+        s <- suff_stats[2, nn]
+        t <- suff_stats[3, nn]
         ## Starts in S
         if(a0 == 1){
             if(s > 2){ #there is at least one chance of not being infected
@@ -223,7 +226,7 @@ loglike_sir_bin <- function(params, suff_stats,
                 S_loglike <- sum(log(1-pt))
             }
             if(s < T){ # if agent does become infectious
-                S_loglike <- S_loglike + log(prob_fxn(params, X[ss, 2], N))
+                S_loglike <- S_loglike + log(prob_fxn(params, X[s, 2], N))
             } else { # agent does not become infectious
                 break # so I_loglike = 0
             }
@@ -247,9 +250,74 @@ loglike_sir_bin <- function(params, suff_stats,
         }
 
     }
+    return(-sum(agent_loglike))
 
 
 
 }
 
-    
+
+agent_loglike_sir <- function(params, X, N,
+                              a0, s, t,
+                              prob_fxn = km_prob){
+    gamma <- params["gamma"]
+    S_loglike <- 0
+    I_loglike <- 0
+    if(a0 == 1){
+        if(s > 2){ #there is at least one chance of not being infected
+            pt <- sapply(1:(s-1), function(ii){
+                prob_fxn(params, X[ii, 2], N)
+            })
+            S_loglike <- sum(log(1-pt))
+        }
+        if(s < T){ # if agent does become infectious
+            S_loglike <- S_loglike + log(prob_fxn(params, X[s, 2], N))
+        } else { # agent does not become infectious
+           return(S_loglike)
+        }
+        if(s < t){# if agent has chance of recovering
+            I_loglike <-  (t - s - 1) * log(1 - gamma)
+            if(t < T){ # if agent does recover
+                I_loglike <- I_loglike + log(gamma)
+            }
+        }
+        agent_loglike <- S_loglike + I_loglike
+        return(agent_loglike)
+        ## Starts in I
+    } else if (a0 == 2){
+        if(t > 2){ # at least one chance of not becoming recovered
+            I_loglike <- (t-1) * log(1 - gamma)
+        }
+        I_loglike <- I_loglike + log(gamma)
+        return(I_loglike)
+
+    } else{
+        agent_loglike <- 0
+        return(agent_loglike)
+    }
+
+
+}
+
+neg_agent_loglike_sir <- function(params, X, N, a0, s, t,
+                                  prob_fxn = km_prob){
+
+    -1 * agent_loglike_sir(params, X, N, a0, s, t)
+}
+
+
+loglike_beta_SIR <- function(beta, X, N, T,
+                             s, prob_fxn = km_prob){
+    params <- c("beta" = beta)
+    S_loglike <- 0
+    if(s > 2){
+        pt <- sapply(1:(s-1), function(ii){
+            prob_fxn(params, X[ii, 2], N)
+        })
+        S_loglike <- sum(log(1-pt))
+    }
+    if(s < T){ # if agent does become infectious
+        S_loglike <- S_loglike + log(prob_fxn(params, X[s, 2], N))
+    }
+    return(S_loglike)
+}

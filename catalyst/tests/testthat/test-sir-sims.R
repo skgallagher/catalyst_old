@@ -65,6 +65,19 @@ test_that("simulate_SIR",{
 
 test_that("loglike_sir_bin", {
     ## Good luck!!
+    params <- c("beta" = .1, "gamma" = .03, "rho" = .002)
+    T <- 100
+    K <- 3
+    L <- 100
+    X0 <- c(950, 50, 0)
+    N <- sum(X0)
+    mod_fxn <- sir_bin
+    prob_fxn <- rf_prob
+    out <- simulate_SIR(params, mod_fxn = mod_fxn,
+                        prob_fxn = prob_fxn,
+                        T = T, L = L, K = 3,
+                        X0 = X0)
+
 
 }
 
