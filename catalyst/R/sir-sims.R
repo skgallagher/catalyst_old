@@ -257,8 +257,19 @@ loglike_sir_bin <- function(params, suff_stats,
 }
 
 
+#' Get the loglike for a singular agent
+#'
+#' @param params vector of params to optimize either (beta, gamma) or (rho, gamma)
+#' @param X matrix Tx3 where the columns are number of S, I, and R at time t
+#' @param N total number of agents
+#' @param a0 initial sate of agent
+#' @param s last time agent was susceptible
+#' @param t last time agent was infectious
+#' @param T total time
+#' @param prob_fxn probability of going from S to I.  Default is km_prob which is beta I /N
+#' @return total log like for a single agent
 agent_loglike_sir <- function(params, X, N,
-                              a0, s, t,
+                              a0, s, t, T,
                               prob_fxn = km_prob){
     gamma <- params["gamma"]
     S_loglike <- 0
@@ -299,13 +310,31 @@ agent_loglike_sir <- function(params, X, N,
 
 }
 
+#' Return negative of agent_loglike_sir
+#'
+#' @param params vector of params to optimize either (beta, gamma) or (rho, gamma)
+#' @param X matrix Tx3 where the columns are number of S, I, and R at time t
+#' @param N total number of agents
+#' @param a0 initial sate of agent
+#' @param s last time agent was susceptible
+#' @param t last time agent was infectious
+#' @param T total time
+#' @param prob_fxn probability of going from S to I.  Default is km_prob which is beta I /N
+#' @return negative loglike
 neg_agent_loglike_sir <- function(params, X, N, a0, s, t,
                                   prob_fxn = km_prob){
 
     -1 * agent_loglike_sir(params, X, N, a0, s, t)
 }
 
-
+#' Get loglike for SIR for beta
+#'
+#' @param X matrix Tx3 where the columns are number of S, I, and R at time t
+#' @param N total number of agents
+#' @param T total number of time steps
+#' @param s scalar last time agent was susceptible
+#' @param prob_fxn probability of transitioning.  Default is km_prob which KM beta * I / N
+#' @return loglike of beta
 loglike_beta_SIR <- function(beta, X, N, T,
                              s, prob_fxn = km_prob){
     params <- c("beta" = beta)
@@ -320,4 +349,183 @@ loglike_beta_SIR <- function(beta, X, N, T,
         S_loglike <- S_loglike + log(prob_fxn(params, X[s, 2], N))
     }
     return(S_loglike)
+}
+
+
+
+
+#' Simulate the AM SIR
+#'
+#' @param params vector of named parameters
+#' @param L number of simulations
+#' @param A T x N matrix of agent states, A[1,] is filled in
+#' @param T total amount of time steps
+#' @param N total number of agents
+#' @param K total number of states
+#' @param agent_update_fxn function to update agents
+#' @param permute_inds logical.  Default is TRUE.
+#' @return filled in matrix of agent states
+am_sir_sims <- function(L = 1, params, A,
+                        T, N, K,
+                        agent_update_fxn = update_agent_sir,
+                        prob_fxn = km_prob,
+                        permute_inds = TRUE){
+    arr <- array(0, dim = c(L, T, N))
+    S_mat <- matrix(0, nrow = T, ncol = L)
+    I_mat <- matrix(0, nrow = T, ncol = L)
+    R_mat <- matrix(0, nrow = T, ncol = L)
+
+
+    for(ll in 1:L){
+        inds <- 1:N # original indices
+        for(tt in 2:(T)){
+            state_inds_list <- get_state_inds(A[tt-1, ], K)
+            for(kk in 1:K){
+                state_inds_k <- state_inds_list[[kk]]
+                if(!any(is.na(state_inds_k))){
+
+                    new_states <- agent_update_fxn(params,
+                                                   kk, N, state_inds_list,
+                                                   prob_fxn, permute_inds)
+                    A[tt, state_inds_k] <- new_states
+                }
+            }
+            if(!permute_inds){
+                perm_list <- reorder_A(A, tt, inds)
+                A <- perm_list$A
+                inds <- perm_list$inds
+            }
+            
+        }
+        
+        summary_list <- summarize_agent_data(A[,order(inds)], K)
+        arr[ll, , ] <- summary_list$agent_data
+        S_mat[, ll] <- summary_list$X[, 1]
+        I_mat[, ll] <- summary_list$X[, 2]
+        R_mat[, ll] <- summary_list$X[,3]
+
+    }
+    out_list <- list(agent_arr = arr, S_mat = S_mat, I_mat = I_mat,
+                     R_mat = R_mat)
+
+    return(out_list)
+
+}
+                            
+
+#' Get the state indices for all states
+#'
+#' @param At vector of length N with current states of each agent
+#' @param K total number of states 1:K
+#' @return list of length K with indices of who is in each
+get_state_inds <- function(At, K){
+    state_list <- vector(mode = "list", length = K)
+    for(kk in 1:K){
+        inds <- which(At == kk)
+        if(length(inds) < 1) inds <- NA
+        state_list[[kk]] <- inds
+    }
+
+    return(state_list)
+
+
+}
+
+
+#' Update the agents in state k for the SIR
+#'
+#' @param params named vector of parameters with "beta" or "rho" and "gamma"
+#' @param kk current state
+#' @param N total number of agents
+#' @param state_inds_list list of length K with indices of who is in each
+#' @param prob_fxn default is km_prob
+#' @param permute_inds logical.  Default is TRUE
+#' @return new_states vector of length of state_inds_list[[kk]]
+update_agent_sir <- function(params,
+                             kk, N, state_inds_list,
+                             prob_fxn = km_prob, permute_inds = TRUE){
+    Nk <- length(state_inds_list[[kk]])
+    I <- length(state_inds_list[[2]]) #number of I
+    new_states <- NULL
+    if(kk == 1){ # susceptible
+        p <- km_prob(params, I, N)
+        new_states <- 1 + rbinom(n = Nk, size = 1, prob = p)
+    } else if(kk == 2){
+        new_states <- 2 + rbinom(n = Nk, size = 1, prob = params["gamma"])
+    } else if (kk == 3){
+        new_states <- rep(3, Nk)
+    }
+    if(!permute_inds){
+        new_states <- sort(new_states, decreasing = TRUE)
+    }
+    return(new_states)
+
+}
+
+
+#' Reorder rows of A
+#' 
+#' @param A matrix of size T x N
+#' @param tt current time step
+#' @param inds vector of indices corresponding to current version of permutation of A
+#' @return list of reordered A and permutation with respect to original ordering
+reorder_A <- function(A, tt, inds){
+    new_inds <- order(A[tt,], decreasing = TRUE)
+    A <- A[, new_inds]
+    perm_inds <- inds[new_inds]
+
+    return(list(A = A, inds = perm_inds))
+
+
+}
+
+#' Put output of am_sir_sims into ggplot df
+#'
+#' @param agent_sims output from am_sir_sims()
+#' @return data frame with columns t, model (AM), type (ave or var), variable (S, I, R)
+agent_sims_sir_gg <- function(agent_sims){
+
+
+    S <- agent_sims$S
+    I <- agent_sims$I
+    R <- agent_sims$R
+    T <- nrow(S)
+    ##
+    S_ave <- rowMeans(S)
+    I_ave <- rowMeans(I)
+    R_ave <- rowMeans(R)
+    df_ave <- data.frame(t = 1:T, S = S_ave, I = I_ave, R = R_ave,
+                         model = "AM", type = "ave")
+    gg_df <- melt(df_ave, id.vars = c("t", "model", "type"))
+    ## var
+    ##
+    S_var <- rowVar(S)
+    I_var <- rowVar(I)
+    R_var <- rowVar(R)
+    df_var <- data.frame(t = 1:T, S = S_var, I = I_var, R = R_var,
+                         model = "AM", type = "var")
+    var_m <- melt(df_ave, id.vars = c("t", "model", "type"))
+    ## Add var
+    gg_df$lower <- gg_df$value - 2 * sqrt(var_m$value)
+    gg_df$upper <- gg_df$value + 2 * sqrt(var_m$value)
+   
+    return(gg_df)
+}
+
+
+#' @param A TxN (or L x N)
+time_to_inf <- function(A){
+    a0 <- A[1,]
+    T <- nrow(A)
+    s <- apply(A, 2, function(row){
+        out <- which(row == 2)[1]
+        if(is.na(out)){
+            return(T + 1)
+        } else {
+            return(out)
+        }
+    })
+    return(s)
+    
+
 }

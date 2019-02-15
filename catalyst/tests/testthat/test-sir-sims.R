@@ -78,7 +78,98 @@ test_that("loglike_sir_bin", {
                         T = T, L = L, K = 3,
                         X0 = X0)
 
-
 }
 
-#    devtools::load_all()
+test_that("am_sir_sims", {
+    params <- c("beta" = 1, "gamma" = .2)
+    N <- 5
+    T <- 4
+    K <- 3
+    L <- 1
+    A <- matrix(0, nrow = T, ncol = N)
+    A[1,] <- c(1, 1, 1, 1, 2)
+    permute_inds <- TRUE
+    out <- am_sir_sims(L = L,params, A, T, N, K,
+                       agent_update_fxn = update_agent_sir,
+                       prob_fxn = km_prob,
+                       permute_inds = permute_inds)
+    ## devtools::load_all()
+#    expect_equal(dim(out), c(T, N))
+    ##
+    permute_inds <- FALSE
+    params <- c("beta" = 1, "gamma" = 1)
+    out <- am_sir_sims(L = 1,params, A, T, N, K,
+                       agent_update_fxn = update_agent_sir,
+                       prob_fxn = km_prob,
+                       permute_inds = permute_inds)
+
+
+})
+
+test_that("get_state_inds", {
+    N <- 5
+    T <- 1
+    
+    mat <- matrix(c(1, 2, 2, 1, 3), nrow = T, ncol = N)
+    K <- 2
+    out <- get_state_inds(mat[1,], K)
+    exp_list <- list(c(1, 4), c(2, 3))
+    expect_equal(exp_list, out)
+    ##
+    K <- 3
+    out <- get_state_inds(mat[1,], K)
+    exp_list <- list(c(1, 4), c(2, 3), c(5))
+    expect_equal(exp_list, out)
+    ## Missing some
+    mat <- matrix(c(1, 3, 1, 1, 3), nrow = T, ncol = N)
+    K <- 3
+    out <- get_state_inds(mat[1,], K)
+    exp_list <- list(c(1, 3, 4), NA, c(2, 5))
+    expect_equal(exp_list, out)
+    
+
+    })
+
+test_that("update_agent_sir", {
+    params <- c("beta" = 1, "gamma" = 1)
+    N <- 5
+    K <- 3
+    prob_fxn <- km_prob
+    permute_inds <- TRUE
+    vec <- c(1, 1, 2, 2, 3)
+    kk <- 1
+    state_inds_list <- get_state_inds(vec, K)
+    new_states <- update_agent_sir(params, kk, N,
+                                   state_inds_list,
+                                   prob_fxn, permute_inds)    
+    expect_equal(length(new_states), 2)
+    ##
+    kk <- 2
+    state_inds_list <- get_state_inds(vec, K)
+    new_states <- update_agent_sir(params, kk, N,
+                                   state_inds_list,
+                                   prob_fxn, permute_inds)
+    expect_equal(length(new_states), 2)
+    ##
+    kk <- 3
+    new_states <- update_agent_sir(params, kk, N,
+                                   state_inds_list,
+                                   prob_fxn, permute_inds)
+    expect_equal(new_states, 3)
+    ## Try when  permute_inds = FALSE
+    permute_inds <- FALSE
+    kk <- 2
+    params <- c("beta" = 1, "gamma" = .5)
+    new_states <- update_agent_sir(params, kk, N,
+                                   state_inds_list,
+                                   prob_fxn, permute_inds)
+    
+    
+   
+
+    
+})
+
+
+## library(testthat)
+##    devtools::load_all()
